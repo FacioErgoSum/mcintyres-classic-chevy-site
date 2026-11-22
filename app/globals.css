@@ -1,0 +1,81 @@
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+@import '@fontsource/yellowtail/400.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-body: 'Atkinson Hyperlegible';
+  --font-script: 'Yellowtail';
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-white text-onyx text-base antialiased; }
+  h1 { @apply text-3xl font-bold; }
+  h2 { @apply text-2xl font-bold; }
+  h3 { @apply text-xl font-bold; }
+  a { @apply text-brand-dark underline underline-offset-4 decoration-2; }
+  a:hover { @apply text-onyx; }
+  :focus-visible { outline: 4px solid #E8A317; outline-offset: 3px; border-radius: 6px; }
+  input, textarea, select { @apply text-base; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+}
+
+@layer components {
+  /* Every button is at least thumb-sized. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-3 rounded-xl px-6 py-4 text-lg font-bold no-underline min-h-[64px] w-full sm:w-auto;
+  }
+  .btn-buy { @apply btn bg-matador text-white hover:bg-matador-dark hover:text-white; }
+  .btn-main { @apply btn bg-brand text-white hover:bg-brand-dark hover:text-white; }
+  .btn-plain { @apply btn bg-white text-onyx border-[3px] border-onyx hover:bg-brand-light hover:text-onyx; }
+
+  /* Big choice tiles for the Project Planner */
+  .choice {
+    @apply block w-full rounded-xl border-[3px] border-brand bg-white px-5 py-5 text-left no-underline text-onyx min-h-[72px];
+  }
+  .choice:hover { @apply bg-brand-light text-onyx; }
+  .choice-title { @apply block text-xl font-bold; }
+  .choice-note { @apply block text-base text-onyx/75 mt-1; }
+
+  .field { @apply block w-full rounded-lg border-[3px] border-onyx/60 bg-white px-4 py-3 min-h-[60px]; }
+  .label { @apply block text-lg font-bold mb-2; }
+  .wrap { @apply mx-auto w-full max-w-3xl px-4; }
+}
+
+/* Chrome side spear between the two paint colors, like a '55 Bel Air. */
+.chrome-spear {
+  height: 7px;
+  background: linear-gradient(to bottom, #f8fafb, #9aa3a9 45%, #5d666c 55%, #e9edef);
+  box-shadow: 0 1px 0 rgba(0,0,0,.25);
+}
+
+/* Chrome script lettering for the McIntyre's name. */
+.chrome-script {
+  font-family: var(--font-script), cursive;
+  background: linear-gradient(to bottom, #ffffff 0%, #dfe5e8 38%, #7f888e 50%, #c9d1d5 62%, #ffffff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 1px rgba(20, 40, 40, .55);
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+  line-height: 1.1;
+}
+
+/* "CLASSIC CHEVY" under the logo: white capitals with a black outline, like the script. */
+.outline-caps {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  color: #fff;
+  /* an outline that works in every browser, built from shadows */
+  text-shadow:
+    -2px -2px 0 #000, 0 -2px 0 #000, 2px -2px 0 #000, 2px 0 0 #000,
+    2px 2px 0 #000, 0 2px 0 #000, -2px 2px 0 #000, -2px 0 0 #000,
+    -1px -3px 0 #000, 1px 3px 0 #000, -3px 1px 0 #000, 3px -1px 0 #000;
+}
