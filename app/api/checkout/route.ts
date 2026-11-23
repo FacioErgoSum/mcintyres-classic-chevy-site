@@ -39,7 +39,9 @@ export async function POST(req: Request) {
     group: 'part' | 'mailer' | 'printed';
   };
   const lines: Line[] = [];
-  const site = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+  // The site's address; tolerate it being set without https:// or with a trailing slash.
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
+  const site = raw ? (/^https?:\/\//.test(raw) ? raw : `https://${raw}`).replace(/\/+$/, '') : new URL(req.url).origin;
   const abs = (u?: string) => (!u ? undefined : u.startsWith('/') ? site + u : u);
 
   for (const i of items) {
