@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Img from '@/components/Img';
 import { allParts, money } from '@/lib/catalog';
 import { FREIGHT_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
 
@@ -40,11 +41,23 @@ export default async function Home() {
         <section className="space-y-5">
           <h2>Made by McIntyre’s</h2>
           <p className="max-w-[60ch]">Repair panels we design and make ourselves in the USA, for the spots other suppliers don’t cover.</p>
-          <ul className="space-y-3">
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             {ours.map((p) => (
               <li key={p.handle}>
-                <Link href={`/parts/${p.handle}`} className="text-xl font-bold">{p.name}</Link>
-                <span className="text-xl font-bold"> — {money(p.price)}</span>
+                <Link
+                  href={`/parts/${p.handle}`}
+                  className="no-underline flex h-full flex-col gap-2 rounded-xl border-[3px] border-onyx/10 bg-white p-3 hover:border-brand focus-visible:border-brand"
+                >
+                  <span className="aspect-square w-full rounded-lg bg-ivory overflow-hidden flex items-center justify-center">
+                    {p.images[0] ? (
+                      <Img srcs={[p.images[0].large, p.images[0].original]} alt="" className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="text-base text-onyx/60">Photo coming</span>
+                    )}
+                  </span>
+                  <span className="text-lg font-bold leading-snug underline decoration-brand underline-offset-4">{p.name}</span>
+                  <span className="mt-auto text-xl font-bold">{money(p.price)}</span>
+                </Link>
               </li>
             ))}
           </ul>
