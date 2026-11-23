@@ -79,7 +79,10 @@ function toPart(r: Row): Part | null {
         return [{ thumb: `${base}${stem}-thumb.webp`, large: `${base}${stem}-large.webp`, original: i.source_url || base + i.storage_path }];
       }
       const u = i.source_url;
-      return u ? [{ thumb: shopifySized(u, 400), large: shopifySized(u, 1400), original: u }] : [];
+      if (!u) return [];
+      // our own photos kept with the site: /parts/name-1-large.webp (+ -thumb.webp)
+      if (u.startsWith('/')) return [{ thumb: u.replace('-large.', '-thumb.'), large: u, original: u }];
+      return [{ thumb: shopifySized(u, 400), large: shopifySized(u, 1400), original: u }];
     });
   const cats = (r.product_categories || []).map((c) => c.category_path);
   const line = r.supplier_id === 'mcintyre' ? 'tri-five' : r.vehicle_line || lineFromCategories(cats, r.title);
@@ -154,7 +157,8 @@ function localAll(): Row[] {
   rows.unshift(
     ours('mcintyre-lower-inner-quarter-patch-lh', '1955-1957 Chevy 2 Door Sedan/Wagon/Nomad/Sedan Delivery/Hardtop Lower Inner Quarter Patch, LH (Except Convertible)', 'Lower inner quarter patch panel, left (driver side)', 60, patch),
     ours('mcintyre-lower-inner-quarter-patch-rh', '1955-1957 Chevy 2 Door Sedan/Wagon/Nomad/Sedan Delivery/Hardtop Lower Inner Quarter Patch, RH (Except Convertible)', 'Lower inner quarter patch panel, right (passenger side)', 60, patch),
-    { ...ours('mcintyre-convertible-rear-seat-back-bracket', '1955-1957 Chevy Convertible Rear Seat Back Brackets, Pair', 'Convertible rear seat back brackets (pair)', 45, 'Made in USA by McIntyre’s. Sold as a pair. Weld to the floor of ’55–’57 convertibles.'), product_categories: [{ category_path: '/tri-five/Interior/Seat-Related' }] },
+    { ...ours('mcintyre-convertible-rear-seat-back-bracket', '1955-1957 Chevy Convertible Rear Seat Back Brackets, Pair', 'Convertible rear seat back brackets (pair)', 45, 'Made in USA by McIntyre’s. Sold as a pair. Weld to the floor of ’55–’57 convertibles.'), product_categories: [{ category_path: '/tri-five/Interior/Seat-Related' }],
+      product_images: [1, 2].map((n) => ({ position: n, source_url: `/parts/convertible-seat-back-brackets-${n}-large.webp`, storage_path: null })) },
   );
   return (localRows = rows);
 }

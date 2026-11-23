@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         product_data: {
           name: part.name,
           description: part.partNumber ? `Part number ${part.partNumber}` : undefined,
-          images: part.images.slice(0, 1).map((ph) => ph.original),
+          images: part.images.slice(0, 1).map((ph) => (ph.original.startsWith("/") ? site + ph.original : ph.original)),
           metadata: { handle: part.handle },
         },
       },
