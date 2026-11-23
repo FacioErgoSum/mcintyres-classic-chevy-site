@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Part } from '@/lib/catalog';
 import { money } from '@/lib/catalog';
 import { describeFitment } from '@/lib/fitment';
+import { lineName } from '@/lib/lines';
 import Img from './Img';
 
 // Name across the full width first, so long Golden Star titles stay readable
@@ -17,7 +18,7 @@ export default function PartRow({ part }: { part: Part }) {
           </span>
           <span className="min-w-0">
             <span className="block text-2xl font-bold">{money(part.price)}</span>
-            <span className="block text-base text-onyx/80 mt-1">Fits {describeFitment(part.fitment)}</span>
+            <span className="block text-base text-onyx/80 mt-1">{part.triFive ? `Fits ${describeFitment(part.fitment)}` : `For ${lineName(part.line)}`}</span>
             {part.mcintyreMade && <span className="inline-block mt-2 rounded-md bg-matador px-3 py-1 text-base font-bold text-white">Made by McIntyre’s</span>}
           </span>
         </span>

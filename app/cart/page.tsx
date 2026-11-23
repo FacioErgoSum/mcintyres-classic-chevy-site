@@ -1,16 +1,31 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { setQty, useCart } from '@/lib/cart';
 import { shippingFor } from '@/lib/shipping';
 import Img from '@/components/Img';
+import CartSuggestions from '@/components/CartSuggestions';
 
 const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: Number.isInteger(n) ? 0 : 2 });
 
 export default function CartPage() {
-  const lines = useCart();
+  const saved = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [fresh, setFresh] = useState<Record<string, { name: string; price: number; freight: boolean }>>({});
+
+  // The cart is saved in the browser; check today's prices and shipping with the store.
+  const key = saved.map((l) => l.handle).sort().join(',');
+  useEffect(() => {
+    if (!key) return;
+    let live = true;
+    fetch('/api/cart-check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ handles: key.split(',') }) })
+      .then((r) => r.json())
+      .then((d) => live && setFresh(d.parts || {}))
+      .catch(() => {});
+    return () => { live = false; };
+  }, [key]);
+  const lines = saved.map((l) => (fresh[l.handle] ? { ...l, ...fresh[l.handle] } : l));
 
   const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
   const ship = shippingFor(lines.map((l) => l.freight));
@@ -66,6 +81,8 @@ export default function CartPage() {
           </li>
         ))}
       </ul>
+
+      <CartSuggestions handles={lines.map((l) => l.handle)} />
 
       <dl className="text-xl space-y-2 max-w-md">
         <div className="flex justify-between"><dt>Parts</dt><dd>{money(subtotal)}</dd></div>

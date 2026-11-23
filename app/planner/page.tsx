@@ -30,7 +30,7 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
       <Step n={1} title="What year is your car?">
         <ul className="grid gap-4 max-w-lg">
           {YEARS.map((y) => (
-            <li key={y}><Link className="choice" href={qs({ year: String(y) })}><span className="choice-title text-2xl">{y}</span></Link></li>
+            <li key={y}><Link className="choice" href={qs({ year: String(y) })}><span className="choice-title text-2xl">’{String(y).slice(-2)}</span></Link></li>
           ))}
           <li><Link className="choice" href={qs({ year: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for all three years</span></Link></li>
         </ul>
@@ -39,7 +39,7 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
   }
 
   const yearNum = year === 'any' ? undefined : Number(year);
-  const yearText = yearNum ? String(yearNum) : '1955–57';
+  const yearText = yearNum ? `’${String(yearNum).slice(-2)}` : '’55–’57';
 
   if (!body) {
     const bodies = BODIES.filter((b) => !(b.id === '4-door-hardtop' && yearNum === 1955));

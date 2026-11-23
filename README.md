@@ -18,7 +18,7 @@ It reads parts from the Supabase database that `golden-star-scraper` fills.
 
 Fitment (year and body style) is worked out from each part's title in `lib/fitment.ts`.
 Areas of the car come from Golden Star's categories in `lib/areas.ts`.
-Shipping is in `lib/shipping.ts`: $15 per order for small parts, $235 per order when anything needs freight.
+Shipping is in `lib/shipping.ts`: $20 per order for small parts, $275 per order when anything needs freight.
 
 ## Run it on your computer
 

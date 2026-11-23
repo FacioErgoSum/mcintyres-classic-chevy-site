@@ -15,7 +15,7 @@ export default function About() {
         Hi, my name is Geoff. Thanks for visiting. My passion for Tri-Five Chevys goes back to my earliest memories.
       </p>
       <p>
-        My dad bought his first car in 1965. It was a 1957 Chevy Bel Air 4-door sedan, and he and my mom brought me home
+        My dad bought his first car in 1965. It was a ’57 Chevy Bel Air 4-door sedan, and he and my mom brought me home
         from the hospital in it. Several ’57s followed. He loved hardtops. His favorite was a Matador Red and India Ivory
         2-door hardtop with an original 2×4 270 hp 283 and a 3-speed. His friends with Tri-Fives would stop by for some wrench time.
       </p>

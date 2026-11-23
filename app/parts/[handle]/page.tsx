@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getPart, money } from '@/lib/catalog';
 import { describeFitment } from '@/lib/fitment';
+import { lineName } from '@/lib/lines';
 import { FREIGHT_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
 import AddToCart from '@/components/AddToCart';
 import Img from '@/components/Img';
@@ -12,7 +13,7 @@ type P = Promise<{ handle: string }>;
 
 export async function generateMetadata({ params }: { params: P }): Promise<Metadata> {
   const part = await getPart((await params).handle);
-  return part ? { title: part.name, description: part.description.slice(0, 160) } : {};
+  return part ? { title: part.mcintyreMade ? part.name : part.title, description: part.description.slice(0, 160) } : {};
 }
 
 export default async function PartPage({ params }: { params: P }) {
@@ -21,7 +22,7 @@ export default async function PartPage({ params }: { params: P }) {
 
   return (
     <article className="space-y-8">
-      <p><Link href="/parts">Back to all parts</Link></p>
+      <p><Link href={part.triFive ? '/parts' : `/other?line=${part.line}`}>{part.triFive ? 'Back to all parts' : `Back to ${lineName(part.line)}`}</Link></p>
       <h1 className="text-2xl sm:text-3xl">{part.name}</h1>
 
       <div className="space-y-3">
@@ -47,7 +48,7 @@ export default async function PartPage({ params }: { params: P }) {
 
       <section className="space-y-3 rounded-xl border-[3px] border-brand p-5">
         <h2 className="text-xl">Fits</h2>
-        <p className="text-xl">{describeFitment(part.fitment)}</p>
+        <p className="text-xl">{part.triFive ? describeFitment(part.fitment) : `${lineName(part.line)}. Check the part name above for the exact years and models.`}</p>
         <p className="text-lg">Not sure it’s right for your car? <Link href={`/ask?part=${encodeURIComponent(part.handle)}`}>Send us a photo of your old part</Link> and we’ll check.</p>
       </section>
 

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { findParts } from '@/lib/catalog';
+import { findOtherParts, findParts } from '@/lib/catalog';
 import { BODIES } from '@/lib/fitment';
 import { areaName } from '@/lib/areas';
 import PartRow from '@/components/PartRow';
@@ -16,9 +16,10 @@ export default async function PartsPage({ searchParams }: { searchParams: SP }) 
   const parts = await findParts({ q, year: yearNum, body, area });
   const limit = Math.max(PAGE, Number(show) || PAGE);
   const shown = parts.slice(0, limit);
+  const others = q ? (await findOtherParts({ q, limit: 1 }).catch(() => ({ total: 0 }))).total : 0;
 
   const bodyName = BODIES.find((b) => b.id === body)?.name.toLowerCase();
-  const car = [yearNum, bodyName].filter(Boolean).join(' ');
+  const car = [yearNum ? `’${String(yearNum).slice(-2)}` : undefined, bodyName].filter(Boolean).join(' ');
   const heading = area ? areaName(area) : q ? `Results for “${q}”` : car ? 'Parts that fit' : 'Search parts';
 
   const keep = (extra: Record<string, string>) =>
@@ -58,6 +59,13 @@ export default async function PartsPage({ searchParams }: { searchParams: SP }) 
       <ul className="space-y-4">
         {shown.map((p) => <PartRow key={p.handle} part={p} />)}
       </ul>
+
+      {others > 0 && (
+        <p className="text-lg rounded-lg bg-ivory p-4">
+          {others.toLocaleString()} {others === 1 ? 'part' : 'parts'} for other cars also {others === 1 ? 'matches' : 'match'} “{q}”.{' '}
+          <Link href={`/other?q=${encodeURIComponent(q!)}`}>See non-Tri-Five parts</Link>
+        </p>
+      )}
 
       {parts.length > shown.length && (
         <Link href={keep({ show: String(limit + PAGE) })} scroll={false} className="btn-plain">

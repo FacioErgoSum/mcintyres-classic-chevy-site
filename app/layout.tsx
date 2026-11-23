@@ -48,13 +48,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <li><Link href="/mcintyre-made">McIntyre-Made</Link></li>
             <li><Link href="/ask">Ask a question</Link></li>
             <li><Link href="/about">About us</Link></li>
+            <li><Link href="/other" className="font-normal">Non-Tri-Five parts</Link></li>
           </ul>
         </nav>
         <main id="main" className="wrap py-8">{children}</main>
         <footer className="mt-12 bg-brand-dark text-white">
           <div className="wrap py-10 space-y-4 text-lg">
             <p className="font-bold text-xl">McIntyre’s Classic Chevy</p>
-            <p>Parts for 1955, 1956 and 1957 Chevrolets. Family owned in Scranton, Kansas.</p>
+            <p>Parts for ’55, ’56 and ’57 Chevrolets. Family owned in Scranton, Kansas.</p>
             <p>
               Questions? <Link href="/ask" className="text-white">Send us a message and photos</Link> and we’ll write back.
               You can also email <a href="mailto:g3chevyparts@gmail.com" className="text-white">g3chevyparts@gmail.com</a> or

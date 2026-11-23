@@ -57,7 +57,7 @@ export default function AskForm({ years, bodies, partName, partHandle }: Props) 
           <label className="label" htmlFor="year">Year</label>
           <select className="field" id="year" name="year" defaultValue="">
             <option value="">Not sure</option>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
+            {years.map((y) => <option key={y} value={y}>’{String(y).slice(-2)}</option>)}
           </select>
         </div>
         <div>

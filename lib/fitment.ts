@@ -97,7 +97,7 @@ export function fits(f: Fitment, year?: number, body?: string): boolean {
 }
 
 export function describeFitment(f: Fitment): string {
-  const yrs = f.years.length === 3 ? '1955, 1956 and 1957' : f.years.join(' and ');
+  const yrs = f.years.length === 3 ? '’55, ’56 and ’57' : f.years.map((y) => `’${String(y).slice(-2)}`).join(' and ');
   if (!f.bodies.length) return `${yrs} Chevrolet, all body styles`;
   const names = BODIES.filter((b) => f.bodies.includes(b.id)).map((b) => (b.id === 'nomad' ? b.name : b.name.toLowerCase()));
   const list = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names.at(-1) : names[0];
