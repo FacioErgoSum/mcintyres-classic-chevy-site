@@ -22,8 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:block focus:p-4">Skip to the page</a>
         <header>
           <div className="bg-brand">
-            <div className="wrap flex items-center justify-between gap-4 py-3">
-              <Link href="/" className="no-underline flex flex-col items-start" aria-label="McIntyre’s Classic Chevy, home">
+            <div className="wrap flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-4 gap-y-3 py-3">
+              <Link href="/" className="no-underline flex flex-col items-start shrink-0" aria-label="McIntyre’s Classic Chevy, home">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/brand/${LOGO}-600.webp`}
@@ -36,23 +36,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 />
                 <span className="outline-caps -mt-1 ml-[18%] text-[1.15rem] sm:text-[1.4rem]">Classic Chevy</span>
               </Link>
-              <CartLink />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <form action="/parts" method="get" role="search" className="relative flex-1 sm:w-64 sm:flex-none">
+                  <label htmlFor="site-search" className="sr-only">Search parts</label>
+                  <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-onyx/50">
+                    <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+                  </svg>
+                  <input
+                    id="site-search"
+                    name="q"
+                    type="search"
+                    placeholder="Search parts"
+                    autoComplete="off"
+                    enterKeyHint="search"
+                    className="w-full h-[52px] rounded-xl border-[3px] border-onyx bg-white pl-11 pr-3 text-lg text-onyx placeholder:text-onyx/55"
+                  />
+                  <button type="submit" className="sr-only">Search</button>
+                </form>
+                <CartLink />
+              </div>
             </div>
-            <form action="/parts" method="get" role="search" className="wrap flex gap-2 pb-3">
-              <label htmlFor="site-search" className="sr-only">Search parts</label>
-              <input
-                id="site-search"
-                name="q"
-                type="search"
-                placeholder="Search parts"
-                autoComplete="off"
-                enterKeyHint="search"
-                className="min-w-0 flex-1 min-h-[52px] rounded-lg border-[3px] border-onyx bg-white px-4 text-lg text-onyx placeholder:text-onyx/60"
-              />
-              <button type="submit" className="shrink-0 min-h-[52px] rounded-lg border-[3px] border-onyx bg-white px-5 text-lg font-bold text-onyx">
-                Search
-              </button>
-            </form>
           </div>
           <div className="chrome-spear" aria-hidden />
         </header>
