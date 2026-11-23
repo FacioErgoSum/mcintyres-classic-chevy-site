@@ -115,7 +115,7 @@ export async function getMerchLine(key: string): Promise<MerchLine | null> {
     key,
     item,
     option,
-    name: option ? `${item.name} (${option.label})` : item.name,
+    name: option && item.options.length > 1 ? `${item.name} (${option.label})` : item.name,
     price: option?.price ?? item.price,
   };
 }

@@ -18,13 +18,19 @@ export default function MerchBuy({ handle, name, price, images, kind, options }:
   const [added, setAdded] = useState(false);
   const [needSize, setNeedSize] = useState(false);
 
+  // "Size", "Color" or "Color and size", depending on what the options are
+  const sizeLike = (l: string) => /^(XXS|XS|S|M|L|XL|\dXL|One size|\d+(\.\d+)?″?["x×]?.*)$/i.test(l.trim());
+  const both = options.some((o) => o.label.includes(' / '));
+  const legend = both ? 'Color and size' : options.every((o) => sizeLike(o.label)) ? 'Size' : 'Color';
+  const pickMsg = both ? 'Pick a color and size' : `Pick a ${legend.toLowerCase()}`;
+
   function add() {
     if (options.length && !size) return setNeedSize(true);
     const opt = options.find((o) => o.label === size);
     addToCart(
       {
         handle: `merch:${handle}:${size ?? ''}`,
-        name: size ? `${name} (${size})` : name,
+        name: size && options.length > 1 ? `${name} (${size})` : name,
         price: opt?.price ?? price,
         images,
         freight: false,
@@ -40,7 +46,7 @@ export default function MerchBuy({ handle, name, price, images, kind, options }:
     <div className="space-y-5">
       {options.length > 1 && (
         <fieldset className="space-y-3">
-          <legend className="text-lg font-bold">Size</legend>
+          <legend className="text-lg font-bold">{legend}</legend>
           <div className="flex flex-wrap gap-2">
             {options.map((o) => (
               <button
@@ -54,7 +60,7 @@ export default function MerchBuy({ handle, name, price, images, kind, options }:
               </button>
             ))}
           </div>
-          {needSize && <p role="alert" className="text-lg font-bold text-matador">Pick a size</p>}
+          {needSize && <p role="alert" className="text-lg font-bold text-matador">{pickMsg}</p>}
         </fieldset>
       )}
       <div className="flex items-center gap-4">
