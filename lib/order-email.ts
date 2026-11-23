@@ -52,15 +52,28 @@ export function orderEmail(
   <h1 style="font-size:26px;margin:0 0 4px">New order from ${esc(order.shipTo.name || order.customer.name)}</h1>
   <p style="font-size:16px;margin:0;color:#555">${order.created.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'full', timeStyle: 'short' })} (Central)</p>
 
-  ${section('Ship to', `<p style="font-size:18px;line-height:1.5;margin:0;padding:12px;background:#f7f7f7;border-radius:8px">${addressLines.map(esc).join('<br>')}</p>
-  <p style="font-size:16px;line-height:1.6;margin:10px 0 0">Phone: <b>${esc(order.customer.phone || 'not given')}</b><br>Email: ${esc(order.customer.email || 'not given')}</p>`)}`;
+  ${section('Ship to', `<table cellspacing="0" cellpadding="0" style="font-size:18px;line-height:1.5;background:#f7f7f7;border-radius:8px;width:100%;max-width:640px">
+    ${[
+      ['Name', order.shipTo.name],
+      ['Address', a.line1],
+      ...(a.line2 ? [['Apt / suite', a.line2]] : []),
+      ['City', a.city],
+      ['State', a.state],
+      ['ZIP', a.zip],
+      ['Phone', order.customer.phone || 'not given'],
+      ['Email', order.customer.email || 'not given'],
+    ]
+      .map(([k, v]) => `<tr><td style="padding:6px 12px;color:#555;font-size:15px;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:6px 12px;font-weight:bold">${esc(v)}</td></tr>`)
+      .join('')}
+  </table>`)}
+`;
 
   if (gsLines.length) {
     html += section(
       `1. Order from Golden Star${freight ? ' (truck freight)' : ''}`,
       `${table(gsLines, true)}
       <p style="margin:18px 0 8px">${gs.url ? button(gs.url, 'Open Golden Star cart') : ''}</p>
-      ${gs.url ? '<p style="font-size:15px;color:#555;margin:0">Opens Golden Star’s checkout with these parts in the cart and the customer’s address filled in. Sign in to your dealer account first if it asks. Check the address, then place the order.</p>' : ''}
+      ${gs.url ? '<p style="font-size:15px;color:#555;margin:0">Opens Golden Star’s checkout with these parts in the cart. Sign in to your dealer account, copy the Ship to address above into the delivery form, then place the order.</p>' : ''}
       ${gs.missing.length ? `<p style="font-size:16px;color:#a33"><b>Add by hand:</b> ${gs.missing.map((l) => `${esc(l.partNumber || l.name)} ×${l.qty}`).join(', ')} (couldn’t find these on goldenstarauto.site).</p>` : ''}`,
     );
   }

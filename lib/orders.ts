@@ -97,8 +97,7 @@ const GS = 'https://goldenstarauto.site';
 
 /**
  * Golden Star's store is Shopify, so a link like /cart/<variant>:<qty>,… opens
- * their checkout with the parts already in the cart, and the ship-to address
- * filled in. The variant numbers are looked up live from Golden Star's public
+ * their checkout with the parts already in the cart. The variant numbers are looked up live from Golden Star's public
  * product pages, so they're always current.
  */
 export async function goldenStarCart(order: Order): Promise<{ url: string | null; missing: OrderLine[] }> {
@@ -123,19 +122,10 @@ export async function goldenStarCart(order: Order): Promise<{ url: string | null
   );
   if (!found.length) return { url: null, missing };
 
-  const [first, ...rest] = order.shipTo.name.trim().split(/\s+/);
-  const a = order.shipTo.address;
-  const q = new URLSearchParams({
-    'checkout[shipping_address][first_name]': first || '',
-    'checkout[shipping_address][last_name]': rest.join(' '),
-    'checkout[shipping_address][address1]': a.line1,
-    'checkout[shipping_address][address2]': a.line2 || '',
-    'checkout[shipping_address][city]': a.city,
-    'checkout[shipping_address][province]': a.state,
-    'checkout[shipping_address][zip]': a.zip,
-    'checkout[shipping_address][country]': a.country === 'US' ? 'United States' : a.country,
-  });
-  return { url: `${GS}/cart/${found.join(',')}?${q.toString()}`, missing };
+  // Address prefill (checkout[shipping_address][…]) made Golden Star's checkout
+  // reject the address, so the link only fills the cart; the email shows the
+  // address ready to copy.
+  return { url: `${GS}/cart/${found.join(',')}`, missing };
 }
 
 // ---------- Printful: printed merch ----------
