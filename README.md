@@ -60,7 +60,7 @@ Customer questions appear in Table Editor → `consult_requests`; their photos a
 1. Push this folder to GitHub.
 2. Netlify → Add new site → Import from GitHub. Netlify detects Next.js; keep its default build settings.
 3. Site settings → Environment variables: add the four values above, plus
-   `NEXT_PUBLIC_SITE_URL` = the site's address (e.g. `https://mcintyresclassicchevy.com`).
+   `NEXT_PUBLIC_SITE_URL` = the site's address, starting with https://
 4. Test a checkout with Stripe's test card `4242 4242 4242 4242`, then switch to the live key.
 5. Point the domain at Netlify when you're ready to replace the old site.
 
