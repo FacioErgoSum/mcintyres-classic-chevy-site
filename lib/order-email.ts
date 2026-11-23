@@ -54,7 +54,8 @@ export function orderEmail(
 
   ${section('Ship to', `<table cellspacing="0" cellpadding="0" style="font-size:18px;line-height:1.5;background:#f7f7f7;border-radius:8px;width:100%;max-width:640px">
     ${[
-      ['Name', order.shipTo.name],
+      ['First name', order.shipTo.name.trim().split(/\s+/)[0] || ''],
+      ['Last name', order.shipTo.name.trim().split(/\s+/).slice(1).join(' ')],
       ['Address', a.line1],
       ...(a.line2 ? [['Apt / suite', a.line2]] : []),
       ['City', a.city],
@@ -84,7 +85,8 @@ export function orderEmail(
     const color = printful.status === 'sent' ? GREEN : '#a33';
     html += section(
       'Printed merch (Printful)',
-      `${table(printed, false)}<p style="font-size:16px;color:${color};margin:12px 0 0"><b>${esc(printful.detail)}</b></p>`,
+      `${table(printed, false)}<p style="font-size:16px;color:${color};margin:12px 0 0"><b>${esc(printful.detail)}</b></p>
+      <p style="margin:16px 0 0">${button('https://www.printful.com/dashboard/default/orders', 'Open Printful orders')}</p>`,
     );
   }
 
@@ -110,7 +112,7 @@ export function orderEmail(
     '',
     ...(gsLines.length ? ['GOLDEN STAR', ...gsLines.map((l) => `${l.qty} × ${l.partNumber || ''} ${l.name}`), gs.url ? `Cart: ${gs.url}` : '', ''] : []),
     ...(ours.length ? ['SHIP FROM SCRANTON', ...ours.map((l) => `${l.qty} × ${l.name}`), ''] : []),
-    ...(printed.length ? ['PRINTFUL', ...printed.map((l) => `${l.qty} × ${l.name}`), printful.detail, ''] : []),
+    ...(printed.length ? ['PRINTFUL', ...printed.map((l) => `${l.qty} × ${l.name}`), printful.detail, 'Printful orders: https://www.printful.com/dashboard/default/orders', ''] : []),
     `Total paid: ${money(order.totals.total)}`,
   ].join('\n');
 
