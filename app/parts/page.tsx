@@ -34,8 +34,9 @@ export default async function PartsPage({ searchParams }: { searchParams: SP }) 
         </p>
       )}
 
+      {(year || body || area) && (
       <form action="/parts" method="get" role="search" className="space-y-3 max-w-xl">
-        <label htmlFor="q" className="label">Search by part name or number</label>
+        <label htmlFor="q" className="label">Search these parts</label>
         <div className="flex flex-col sm:flex-row gap-3">
           <input id="q" name="q" defaultValue={q} placeholder="For example: floor pan, or FP13-552" className="field" />
           {year && <input type="hidden" name="year" value={year} />}
@@ -44,6 +45,7 @@ export default async function PartsPage({ searchParams }: { searchParams: SP }) 
           <button className="btn-main sm:w-48" type="submit">Search</button>
         </div>
       </form>
+      )}
 
       <p className="text-lg font-bold" aria-live="polite">
         {parts.length === 0 ? 'No parts match.' : parts.length === 1 ? '1 part' : `${parts.length} parts`}

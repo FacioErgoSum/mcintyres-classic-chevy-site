@@ -13,7 +13,7 @@ type P = Promise<{ handle: string }>;
 
 export async function generateMetadata({ params }: { params: P }): Promise<Metadata> {
   const part = await getPart((await params).handle);
-  return part ? { title: part.mcintyreMade ? part.name : part.title, description: part.description.slice(0, 160) } : {};
+  return part ? { title: part.mcintyreMade ? part.name : part.title, description: (part.description || part.name).slice(0, 160) } : {};
 }
 
 export default async function PartPage({ params }: { params: P }) {
@@ -31,8 +31,8 @@ export default async function PartPage({ params }: { params: P }) {
         <p className="text-3xl font-bold">{money(part.price)}</p>
         <p className="text-lg">
           {part.freight
-            ? `Ships by truck freight: ${money(FREIGHT_USD)} per order, however many panels you order.`
-            : `Ships in a box: ${money(SMALL_PARCEL_USD)} per order.`}
+            ? `Freight Shipping: ${money(FREIGHT_USD)}`
+            : `Ground Shipping: ${money(SMALL_PARCEL_USD)}`}
         </p>
       </div>
 
@@ -50,7 +50,19 @@ export default async function PartPage({ params }: { params: P }) {
 
       <section className="space-y-3">
         <h2 className="text-xl">About this part</h2>
-        <p className="max-w-[65ch]">{part.description}</p>
+        {part.description && <p className="max-w-[65ch]">{part.description}</p>}
+        {part.facts.length > 0 && (
+          <dl className="space-y-2 max-w-[65ch] text-lg">
+            {part.facts
+              .filter((f) => !(part.triFive && f.label === 'Years'))
+              .map((f) => (
+                <div key={f.label}>
+                  <dt className="inline font-bold">{f.label}: </dt>
+                  <dd className="inline">{f.value}</dd>
+                </div>
+              ))}
+          </dl>
+        )}
         {part.partNumber && <p className="text-lg">Part number: <strong>{part.partNumber}</strong></p>}
       </section>
     </article>

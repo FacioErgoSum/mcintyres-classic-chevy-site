@@ -30,6 +30,6 @@ export function shippingFor(freightFlags: boolean[]) {
   if (!freightFlags.length) return { label: 'Shipping', amount: 0, freight: false };
   const freight = freightFlags.some(Boolean);
   return freight
-    ? { label: 'Freight shipping (large sheet metal)', amount: FREIGHT_USD, freight: true }
-    : { label: 'Shipping', amount: SMALL_PARCEL_USD, freight: false };
+    ? { label: 'Freight Shipping', amount: FREIGHT_USD, freight: true }
+    : { label: 'Ground Shipping', amount: SMALL_PARCEL_USD, freight: false };
 }

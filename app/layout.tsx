@@ -38,13 +38,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               <CartLink />
             </div>
+            <form action="/parts" method="get" role="search" className="wrap flex gap-2 pb-3">
+              <label htmlFor="site-search" className="sr-only">Search parts</label>
+              <input
+                id="site-search"
+                name="q"
+                type="search"
+                placeholder="Search parts"
+                autoComplete="off"
+                enterKeyHint="search"
+                className="min-w-0 flex-1 min-h-[52px] rounded-lg border-[3px] border-onyx bg-white px-4 text-lg text-onyx placeholder:text-onyx/60"
+              />
+              <button type="submit" className="shrink-0 min-h-[52px] rounded-lg border-[3px] border-onyx bg-white px-5 text-lg font-bold text-onyx">
+                Search
+              </button>
+            </form>
           </div>
           <div className="chrome-spear" aria-hidden />
         </header>
         <nav aria-label="Main" className="border-b-[3px] border-onyx/10">
           <ul className="wrap flex flex-wrap gap-x-6 gap-y-2 py-3 text-lg font-bold">
             <li><Link href="/planner">Find parts for my car</Link></li>
-            <li><Link href="/parts">Search parts</Link></li>
             <li><Link href="/mcintyre-made">McIntyre-Made</Link></li>
             <li><Link href="/ask">Ask a question</Link></li>
             <li><Link href="/about">About us</Link></li>

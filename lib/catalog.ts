@@ -15,6 +15,7 @@ export type Part = {
   name: string; // plain name when Dad has written one, otherwise the supplier title
   title: string;
   description: string;
+  facts: { label: string; value: string }[]; // short spec lines such as Placement or Dimensions
   price: number;
   images: Photo[]; // each photo: small copy for lists, large copy for the part page, original as fallback
   areas: AreaId[];
@@ -60,6 +61,53 @@ function cleanDescription(text: string, title: string): string {
     .trim();
 }
 
+// Golden Star's descriptions are a flattened spec list wrapped in sales copy:
+//   "<title> by Golden Star Auto. If your old … Information: Fender Brace Backed by a
+//    limited warranty Years: 1970, 1971 Placement: Left Hand - Driver's Side Available
+//    Shipping: Ground Over the years your original … at the price you want!"
+// Keep the facts, drop the labels and the sales copy.
+const LABELS = /(Information|PLEASE NOTE|Month and Years|Years|Placement|Color|[A-Z][\w ]{0,30}?Dimensions|Available Shipping|Installation video)\s*:/g;
+
+function spanYears(list: string): string {
+  const ys = (list.match(/\b(19|20)\d\d\b/g) || []).map(Number);
+  if (!ys.length) return list.trim();
+  const run = ys.every((y, i) => i === 0 || y === ys[i - 1] + 1);
+  const short = (y: number) => `’${String(y).slice(-2)}`;
+  return ys.length > 1 && run ? `${short(ys[0])}–${short(ys[ys.length - 1])}` : ys.map(short).join(', ');
+}
+
+function parseGoldenStar(text: string, title: string): { description: string; facts: Part['facts'] } | null {
+  const t = text.replace(/\s+/g, ' ');
+  const start = t.search(/Information\s*:/);
+  if (start < 0) return null;
+  const end = t.indexOf('Over the years your original', start);
+  const body = t.slice(start, end < 0 ? undefined : end).replace(/Backed by a limited warranty\.?/gi, ' ');
+  const parts: { label: string; value: string }[] = [];
+  const marks = [...body.matchAll(LABELS)];
+  marks.forEach((m, i) => {
+    const from = m.index! + m[0].length;
+    const to = i + 1 < marks.length ? marks[i + 1].index! : body.length;
+    parts.push({ label: m[1].trim(), value: body.slice(from, to).trim() });
+  });
+  const get = (re: RegExp) => parts.find((p) => re.test(p.label))?.value || '';
+  const facts: Part['facts'] = [];
+  const placement = get(/^Placement$/);
+  if (placement && !/per product specifications/i.test(placement)) facts.push({ label: 'Placement', value: placement });
+  for (const d of parts.filter((p) => /Dimensions$/.test(p.label) && p.value)) facts.push({ label: d.label, value: d.value });
+  const color = get(/^Color$/);
+  if (color) facts.push({ label: 'Color', value: color });
+  const years = get(/Years$/);
+  if (years) facts.push({ label: 'Years', value: spanYears(years) });
+  const note = get(/^PLEASE NOTE$/)
+    .split(/(?<=[.!?])\s+/)
+    .filter((x) => x && !/golden star|call or email us/i.test(x))
+    .join(' ');
+  if (note) facts.push({ label: 'Note', value: note });
+  let description = get(/^Information$/);
+  if (description.toLowerCase() === title.toLowerCase()) description = '';
+  return { description, facts };
+}
+
 // Golden Star's photos live on Shopify's image server, which resizes on request.
 function shopifySized(url: string, width: number) {
   if (!/cdn\.shopify\.com/.test(url)) return url;
@@ -80,7 +128,7 @@ function toPart(r: Row): Part | null {
       }
       const u = i.source_url;
       if (!u) return [];
-      // our own photos kept with the site: /parts/name-1-large.webp (+ -thumb.webp)
+      // our own photos kept with the site: /photos/parts/name-1-large.webp (+ -thumb.webp)
       if (u.startsWith('/')) return [{ thumb: u.replace('-large.', '-thumb.'), large: u, original: u }];
       return [{ thumb: shopifySized(u, 400), large: shopifySized(u, 1400), original: u }];
     });
@@ -92,7 +140,7 @@ function toPart(r: Row): Part | null {
     partNumber: r.part_number,
     name: shortYears(r.plain_name || r.title),
     title: r.title,
-    description: shortYears(r.our_description || (r.supplier_id === 'mcintyre' ? r.description || '' : cleanDescription(r.description || '', r.title))),
+    ...describe(r),
     price: Number(r.retail_price),
     images,
     areas: triFive ? areasFor(cats, r.title) : [],
@@ -102,6 +150,14 @@ function toPart(r: Row): Part | null {
     mcintyreMade: r.supplier_id === 'mcintyre',
     freight: r.supplier_id === 'mcintyre' ? false : needsFreight(r.title, Number(r.retail_price), r.description),
   };
+}
+
+function describe(r: Row): { description: string; facts: Part['facts'] } {
+  if (r.our_description) return { description: shortYears(r.our_description), facts: [] };
+  if (r.supplier_id === 'mcintyre') return { description: shortYears(r.description || ''), facts: [] };
+  const parsed = parseGoldenStar(r.description || '', r.title);
+  if (parsed) return { description: shortYears(parsed.description), facts: parsed.facts };
+  return { description: shortYears(cleanDescription(r.description || '', r.title)), facts: [] };
 }
 
 const db = () => createClient(URL!, KEY!, { auth: { persistSession: false } });
@@ -158,7 +214,7 @@ function localAll(): Row[] {
     ours('mcintyre-lower-inner-quarter-patch-lh', '1955-1957 Chevy 2 Door Sedan/Wagon/Nomad/Sedan Delivery/Hardtop Lower Inner Quarter Patch, LH (Except Convertible)', 'Lower inner quarter patch panel, left (driver side)', 60, patch),
     ours('mcintyre-lower-inner-quarter-patch-rh', '1955-1957 Chevy 2 Door Sedan/Wagon/Nomad/Sedan Delivery/Hardtop Lower Inner Quarter Patch, RH (Except Convertible)', 'Lower inner quarter patch panel, right (passenger side)', 60, patch),
     { ...ours('mcintyre-convertible-rear-seat-back-bracket', '1955-1957 Chevy Convertible Rear Seat Back Brackets, Pair', 'Convertible rear seat back brackets (pair)', 45, 'Made in USA by McIntyre’s. Sold as a pair. Weld to the floor of ’55–’57 convertibles.'), product_categories: [{ category_path: '/tri-five/Interior/Seat-Related' }],
-      product_images: [1, 2].map((n) => ({ position: n, source_url: `/parts/convertible-seat-back-brackets-${n}-large.webp`, storage_path: null })) },
+      product_images: [1, 2].map((n) => ({ position: n, source_url: `/photos/parts/convertible-seat-back-brackets-${n}-large.webp`, storage_path: null })) },
   );
   return (localRows = rows);
 }

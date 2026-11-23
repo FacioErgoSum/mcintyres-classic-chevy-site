@@ -14,7 +14,6 @@ export default async function Home() {
         <p className="text-xl max-w-[34ch]">Tell us your car and what you’re fixing. We’ll show you the parts that fit it.</p>
         <div className="flex flex-col gap-4 max-w-md">
           <Link href="/planner" className="btn-main text-xl">Find parts for my car</Link>
-          <Link href="/parts" className="btn-plain">Search by name or part number</Link>
           <Link href="/ask" className="btn-plain">Ask us a question with photos</Link>
         </div>
         <figure className="-mx-4 sm:mx-0">
