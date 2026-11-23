@@ -252,10 +252,41 @@ export type Filter = { year?: number; body?: string; area?: string; q?: string }
 
 const wordsOf = (q?: string) => (q || '').toLowerCase().split(/\s+/).map((w) => w.replace(/[^a-z0-9.\-/&]/g, '')).filter(Boolean);
 
-/** Tri-Five parts matching the planner or a search. */
+const esc = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const SMALL_BITS = /\b(braces?|brackets?|patch(es)?|supports?|clips?|extensions?|reinforcements?|gaskets?|seals?|plugs?|hardware|bolts?|screws?)\b/i;
+
+// How well a part matches a search, so the part people mean comes first:
+// the exact phrase beats the words apart, whole words beat parts of words
+// ("pan" in "panel"), and the main panel beats its braces and patches
+// unless those were searched for.
+function searchScore(p: Part, words: string[]): number {
+  // "2 Door" and "4 Door" describe the car, not the part
+  const text = `${p.name} ${p.title}`.toLowerCase().replace(/\b\d\s*-?\s*(door|dr)s?\b/g, ' ');
+  const pn = (p.partNumber ?? '').toLowerCase();
+  let score = 0;
+  if (pn && words.join(' ') === pn) score += 1000;
+  else if (pn && words.some((w) => pn.startsWith(w) && w.length > 3)) score += 300;
+  const phrase = words.join(' ');
+  if (words.length > 1 && new RegExp(`\\b${esc(phrase)}(s|es)?\\b`).test(text)) score += 100;
+  for (const w of words) {
+    if (new RegExp(`\\b${esc(w)}(s|es)?\\b`).test(text)) score += 20;
+    else if (new RegExp(`\\b${esc(w)}`).test(text)) score += 5;
+  }
+  // "Kit with Factory Style Hood" or "Hood Latch" are not the hood itself
+  const title = p.title.toLowerCase().replace(/\b\d\s*-?\s*(door|dr)s?\b/g, ' ').replace(/\s*\(.*?\)\s*/g, ' ').replace(/[,\s]+(lh|rh|pair|set)\s*$/i, '').trim();
+  const at = title.search(new RegExp(`\\b${esc(words[0])}`));
+  const joiner = title.search(/\b(with|w\/|incl|for|to|fits?|inside|behind|under)\b/);
+  if (joiner >= 0 && at > joiner) score -= 25;
+  if (new RegExp(`\\b${esc(words[words.length - 1])}(s|es)?$`).test(title)) score += 10;
+  const small = SMALL_BITS.exec(p.title);
+  if (small && !words.some((w) => small[0].toLowerCase().startsWith(w))) score -= 30;
+  return score;
+}
+
+/** Tri-Five parts matching the planner or a search, best match first. */
 export async function findParts({ year, body, area, q }: Filter): Promise<Part[]> {
   const words = wordsOf(q);
-  return (await allParts()).filter((p) => {
+  const found = (await allParts()).filter((p) => {
     if (!fits(p.fitment, year, body)) return false;
     if (area && !p.areas.includes(area as AreaId)) return false;
     if (words.length) {
@@ -264,6 +295,9 @@ export async function findParts({ year, body, area, q }: Filter): Promise<Part[]
     }
     return true;
   });
+  if (!words.length) return found;
+  const scores = new Map(found.map((p) => [p.handle, searchScore(p, words)]));
+  return found.sort((a, b) => scores.get(b.handle)! - scores.get(a.handle)! || a.title.localeCompare(b.title));
 }
 
 // ---------- Non-Tri-Five: looked up from the database on request ----------
