@@ -6,7 +6,7 @@ import { describeFitment } from '@/lib/fitment';
 import { lineName } from '@/lib/lines';
 import { FREIGHT_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
 import AddToCart from '@/components/AddToCart';
-import Img from '@/components/Img';
+import Gallery from '@/components/Gallery';
 
 export const revalidate = 600;
 type P = Promise<{ handle: string }>;
@@ -25,15 +25,7 @@ export default async function PartPage({ params }: { params: P }) {
       <p><Link href={part.triFive ? '/parts' : `/other?line=${part.line}`}>{part.triFive ? 'Back to all parts' : `Back to ${lineName(part.line)}`}</Link></p>
       <h1 className="text-2xl sm:text-3xl">{part.name}</h1>
 
-      <div className="space-y-3">
-        {part.images.length ? (
-          part.images.map((ph, i) => (
-            <Img key={ph.original} srcs={[ph.large, ph.original]} eager={i === 0} alt={i === 0 ? part.name : `${part.name}, photo ${i + 1}`} className="w-full max-h-[70vh] object-contain rounded-xl bg-ivory border-[3px] border-onyx/10" />
-          ))
-        ) : (
-          <div className="rounded-xl bg-ivory p-10 text-center text-lg">Photo coming soon</div>
-        )}
-      </div>
+      <Gallery photos={part.images} name={part.name} />
 
       <div className="space-y-2">
         <p className="text-3xl font-bold">{money(part.price)}</p>
