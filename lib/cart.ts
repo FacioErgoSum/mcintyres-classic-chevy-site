@@ -4,7 +4,18 @@
 import { useEffect, useState } from 'react';
 
 // images: photo addresses to try in order (small copy first, then the original)
-export type CartLine = { handle: string; name: string; price: number; image?: string; images?: string[]; qty: number; freight: boolean };
+// Merch lines use handle "merch:<item>:<size>" and kind 'mailer' or 'printed'.
+export type CartLine = {
+  handle: string;
+  name: string;
+  price: number;
+  image?: string;
+  images?: string[];
+  qty: number;
+  freight: boolean;
+  href?: string; // page to link back to; parts default to /parts/<handle>
+  kind?: 'part' | 'mailer' | 'printed';
+};
 const KEY = 'mcintyres-cart-v1';
 const EVENT = 'mcintyres-cart-change';
 

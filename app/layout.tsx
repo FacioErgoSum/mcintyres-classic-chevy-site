@@ -63,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ul className="wrap flex flex-wrap gap-x-6 gap-y-2 py-3 text-lg font-bold">
             <li><Link href="/planner">Find parts for my car</Link></li>
             <li><Link href="/mcintyre-made">McIntyre-Made</Link></li>
+            <li><Link href="/merch">Merch</Link></li>
             <li><Link href="/ask">Ask a question</Link></li>
             <li><Link href="/about">About us</Link></li>
             <li><Link href="/other" className="font-normal">Non-Tri-Five parts</Link></li>

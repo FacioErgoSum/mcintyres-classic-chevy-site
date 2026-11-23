@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { setQty, useCart } from '@/lib/cart';
-import { shippingFor } from '@/lib/shipping';
+import { shippingForOrder } from '@/lib/shipping';
 import Img from '@/components/Img';
 import CartSuggestions from '@/components/CartSuggestions';
 
@@ -12,7 +12,7 @@ export default function CartPage() {
   const saved = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [fresh, setFresh] = useState<Record<string, { name: string; price: number; freight: boolean }>>({});
+  const [fresh, setFresh] = useState<Record<string, { name: string; price: number; freight: boolean; kind?: 'mailer' | 'printed' }>>({});
 
   // The cart is saved in the browser; check today's prices and shipping with the store.
   const key = saved.map((l) => l.handle).sort().join(',');
@@ -28,7 +28,12 @@ export default function CartPage() {
   const lines = saved.map((l) => (fresh[l.handle] ? { ...l, ...fresh[l.handle] } : l));
 
   const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
-  const ship = shippingFor(lines.map((l) => l.freight));
+  const isMerch = (l: (typeof lines)[number]) => l.handle.startsWith('merch:');
+  const ship = shippingForOrder({
+    partsFreight: lines.filter((l) => !isMerch(l)).map((l) => l.freight),
+    mailerMerch: lines.filter((l) => isMerch(l) && l.kind !== 'printed').length,
+    printedMerch: lines.filter((l) => isMerch(l) && l.kind === 'printed').length,
+  });
 
   async function checkout() {
     setBusy(true);
@@ -68,7 +73,7 @@ export default function CartPage() {
                 <Img srcs={l.images?.length ? l.images : l.image ? [l.image, l.image.replace(/-thumb\.webp$/, '.jpg'), l.image.replace(/-thumb\.webp$/, '.png')] : []} alt="" className="w-full h-full object-contain" />
               </span>
               <div>
-                <Link href={`/parts/${l.handle}`} className="text-xl font-bold">{l.name}</Link>
+                <Link href={l.href || `/parts/${l.handle}`} className="text-xl font-bold">{l.name}</Link>
                 <p className="text-lg">{money(l.price)} each</p>
               </div>
             </div>
@@ -82,14 +87,16 @@ export default function CartPage() {
         ))}
       </ul>
 
-      <CartSuggestions handles={lines.map((l) => l.handle)} />
+      <CartSuggestions handles={lines.filter((l) => !isMerch(l)).map((l) => l.handle)} />
 
       <dl className="text-xl space-y-2 max-w-md">
-        <div className="flex justify-between"><dt>Parts</dt><dd>{money(subtotal)}</dd></div>
-        <div className="flex justify-between gap-4"><dt>{ship.label}</dt><dd>{money(ship.amount)}</dd></div>
+        <div className="flex justify-between"><dt>Items</dt><dd>{money(subtotal)}</dd></div>
+        {ship.lines.map((s) => (
+          <div key={s.label} className="flex justify-between gap-4"><dt>{s.label}</dt><dd>{money(s.amount)}</dd></div>
+        ))}
         <div className="flex justify-between font-bold text-2xl border-t-[3px] border-onyx pt-2"><dt>Total</dt><dd>{money(subtotal + ship.amount)}</dd></div>
       </dl>
-      <p className="text-lg text-onyx/80">Sales tax, if any, is added at checkout.</p>
+      {process.env.NEXT_PUBLIC_STRIPE_TAX === 'on' && <p className="text-lg text-onyx/80">Sales tax is added at checkout.</p>}
 
       {error && <p role="alert" className="rounded-lg bg-matador/10 border-[3px] border-matador p-4 text-lg">{error}</p>}
       <button type="button" className="btn-buy text-xl sm:min-w-[18rem]" disabled={busy} onClick={checkout}>

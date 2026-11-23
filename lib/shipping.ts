@@ -25,11 +25,30 @@ export function needsFreight(title: string, price: number, description?: string 
   return price >= 200 && BIG.test(title) && !SMALL.test(title);
 }
 
-// items: each line's freight flag (true = big sheet metal)
+// Merch ships separately from parts:
+// - Small merch (pins, keychains, decals, patches) goes out from Scranton in a
+//   mailer. It rides free when the order also has parts.
+// - Printed merch (shirts, totes, posters) is printed and shipped by Printful.
+export const MERCH_MAILER_USD = 5; // small merch only, no parts in the order
+export const PRINTFUL_SHIPPING_USD = 6; // per order with printed merch; match Printful's real rate once set up
+
+export type ShippingLine = { label: string; amount: number };
+
+// The whole order: parts (freight flags), small merch from Scranton, printed merch.
+export function shippingForOrder(o: { partsFreight: boolean[]; mailerMerch: number; printedMerch: number }) {
+  const lines: ShippingLine[] = [];
+  if (o.partsFreight.length) {
+    lines.push(o.partsFreight.some(Boolean) ? { label: 'Freight Shipping', amount: FREIGHT_USD } : { label: 'Ground Shipping', amount: SMALL_PARCEL_USD });
+  } else if (o.mailerMerch > 0) {
+    lines.push({ label: 'Merch Shipping', amount: MERCH_MAILER_USD });
+  }
+  if (o.printedMerch > 0) lines.push({ label: o.partsFreight.length || o.mailerMerch ? 'Printed Merch Shipping' : 'Merch Shipping', amount: PRINTFUL_SHIPPING_USD });
+  const amount = lines.reduce((s, l) => s + l.amount, 0);
+  return { lines, amount, label: lines.map((l) => l.label).join(' + ') || 'Shipping', freight: o.partsFreight.some(Boolean) };
+}
+
+// Parts only (older callers)
 export function shippingFor(freightFlags: boolean[]) {
-  if (!freightFlags.length) return { label: 'Shipping', amount: 0, freight: false };
-  const freight = freightFlags.some(Boolean);
-  return freight
-    ? { label: 'Freight Shipping', amount: FREIGHT_USD, freight: true }
-    : { label: 'Ground Shipping', amount: SMALL_PARCEL_USD, freight: false };
+  const r = shippingForOrder({ partsFreight: freightFlags, mailerMerch: 0, printedMerch: 0 });
+  return { label: r.label, amount: r.amount, freight: r.freight };
 }
