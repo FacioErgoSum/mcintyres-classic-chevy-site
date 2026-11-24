@@ -35,12 +35,12 @@ export default async function PartPage({ params }: { params: P }) {
         <dl className="text-lg space-y-1">
           <div>
             <dt className="inline">{part.freight ? 'Freight shipping' : 'Ground shipping'}: </dt>
-            <dd className="inline">{money(part.freight ? FREIGHT_USD : SMALL_PARCEL_USD)} per order, plus {money(EXTRA_PART_USD)} for each extra part</dd>
+            <dd className="inline">{part.freight ? `${money(FREIGHT_USD)} per order, no matter how many parts` : `${money(SMALL_PARCEL_USD)} per order, plus ${money(EXTRA_PART_USD)} for each extra part`}</dd>
           </div>
           {!part.mcintyreMade && (
             <div>
               <dt className="inline">Warehouse packing fee: </dt>
-              <dd className="inline">{money(GS_PACKING_FEE_USD)} per order. Our warehouse charges it on every order, so we show it instead of hiding it in the price.</dd>
+              <dd className="inline">{money(GS_PACKING_FEE_USD)} per order</dd>
             </div>
           )}
         </dl>

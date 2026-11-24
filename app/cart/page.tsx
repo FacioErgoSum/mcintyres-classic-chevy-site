@@ -104,9 +104,6 @@ export default function CartPage() {
         {ship.lines.map((s) => (
           <div key={s.label} className="flex justify-between gap-4"><dt>{s.label}</dt><dd>{money(s.amount)}</dd></div>
         ))}
-        {ship.lines.some((s) => s.label === 'Warehouse packing fee') && (
-          <p className="text-base text-onyx/80">Our warehouse charges the packing fee on every order. We show it on its own line instead of hiding it in our prices.</p>
-        )}
         <div className="flex justify-between font-bold text-2xl border-t-[3px] border-onyx pt-2"><dt>Total</dt><dd>{money(subtotal + ship.amount)}</dd></div>
       </dl>
       {process.env.NEXT_PUBLIC_STRIPE_TAX === 'on' && <p className="text-lg text-onyx/80">Sales tax is added at checkout.</p>}

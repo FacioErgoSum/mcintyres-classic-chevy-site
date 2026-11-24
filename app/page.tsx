@@ -29,7 +29,7 @@ export default async function Home() {
       {ours.length > 0 && (
         <section className="space-y-5">
           <h2>Made by McIntyre’s</h2>
-          <p className="max-w-[60ch]">Repair panels we design and make ourselves in the USA, for the spots other suppliers don’t cover.</p>
+          <p className="max-w-[60ch]">Repair panels we design and make ourselves in the USA.</p>
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             {ours.map((p) => (
               <li key={p.handle}>
@@ -67,10 +67,8 @@ export default async function Home() {
         <h2>How shipping works</h2>
         <ul className="list-disc pl-7 space-y-2 max-w-[60ch]">
           <li>Small parts ship in a box for {money(SMALL_PARCEL_USD)}, plus {money(EXTRA_PART_USD)} for each extra part.</li>
-          <li>Big sheet metal, like floor pans, quarter panels and hoods, ships by truck freight for {money(FREIGHT_USD)} per order, plus {money(EXTRA_PART_USD)} for each extra part.</li>
-          <li>Our warehouse charges a {money(GS_PACKING_FEE_USD)} packing fee on every order. We list it on its own line so you can see exactly what you’re paying for.</li>
-          <li>Parts marked out of stock can’t be ordered until they’re back, so you’re never charged for a part that can’t ship.</li>
-          <li>Check every panel when it arrives, before you sign for it. Write any damage on the delivery receipt.</li>
+          <li>Big sheet metal, like floor pans, quarter panels and hoods, ships by truck freight for {money(FREIGHT_USD)} per order, no matter how many parts.</li>
+          <li>Our warehouse charges a {money(GS_PACKING_FEE_USD)} packing fee on every order.</li>
         </ul>
       </section>
     </div>

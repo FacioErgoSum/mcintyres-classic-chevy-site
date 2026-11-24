@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     const path = `${folder}/${i + 1}.${ext}`;
     const { error } = await db.storage.from('customer-photos').upload(path, f, { contentType: f.type });
     if (!error) paths.push(path);
+    else console.error(`Ask form: photo upload failed: ${error.message}`);
   }
 
   const { error } = await db.from('consult_requests').insert({
@@ -38,6 +39,15 @@ export async function POST(req: Request) {
     message,
     photo_paths: paths,
   });
-  if (error) return NextResponse.json({ error: 'Your message didn’t save.' }, { status: 500 });
+  if (error) {
+    // Shows in the terminal running the site, or Netlify → Logs → Functions.
+    const hint = /relation|does not exist|schema cache/i.test(error.message)
+      ? ' (the consult_requests table is missing: run supabase/questions.sql in the Supabase SQL editor)'
+      : /api key|jwt|apikey|unauthorized|permission|row-level/i.test(error.message)
+        ? ' (check SUPABASE_SECRET_KEY: it must be the secret key, not the publishable one)'
+        : '';
+    console.error(`Ask form: saving the message failed: ${error.message}${hint}`);
+    return NextResponse.json({ error: 'Your message didn’t save. Please email us at g3chevyparts@gmail.com instead, and we’ll look into it.' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

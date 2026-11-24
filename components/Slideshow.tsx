@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import type { Slide } from '@/lib/slides';
 
 const SECONDS = 6;
+// White arrows floating over the picture (higher up on phones, clear of the caption). A soft shadow
+// keeps them visible on light photos; they stay white on hover.
+const ARROW =
+  'absolute top-[30%] sm:top-1/2 z-20 -translate-y-1/2 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-black/25 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:bg-black/40 hover:text-white';
 
 // Auto-rotating banner. Pauses while the pointer or keyboard focus is on it,
-// has a Pause button (people who read slowly need it), and doesn't move at all
-// for visitors whose device asks for reduced motion.
+// and doesn't move at all for visitors whose device asks for reduced motion.
 export default function Slideshow({ slides }: { slides: Slide[] }) {
   const [at, setAt] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -45,7 +48,7 @@ export default function Slideshow({ slides }: { slides: Slide[] }) {
             aria-label={`${i + 1} of ${n}: ${s.title || s.alt}`}
             aria-hidden={i !== at}
             tabIndex={i === at ? 0 : -1}
-            className={`absolute inset-0 block no-underline text-white transition-opacity duration-700 ${i === at ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}
+            className={`absolute inset-0 block no-underline text-white hover:text-white transition-opacity duration-700 ${i === at ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -65,11 +68,20 @@ export default function Slideshow({ slides }: { slides: Slide[] }) {
             )}
           </Link>
         ))}
+        {n > 1 && (
+          <>
+            <button type="button" aria-label="Previous slide" onClick={() => go(at - 1)} className={`${ARROW} left-2 sm:left-3`}>
+              <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 5-7 7 7 7" /></svg>
+            </button>
+            <button type="button" aria-label="Next slide" onClick={() => go(at + 1)} className={`${ARROW} right-2 sm:right-3`}>
+              <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 5 7 7-7 7" /></svg>
+            </button>
+          </>
+        )}
       </div>
 
       {n > 1 && (
-        <div className="flex items-center justify-center gap-2 px-4 sm:px-0">
-          <button type="button" className="btn-plain !w-14 !min-h-[52px] !px-0 !py-0 text-2xl" aria-label="Previous slide" onClick={() => go(at - 1)}>‹</button>
+        <div className="flex items-center justify-center px-4 sm:px-0">
           <ul className="flex items-center gap-1" aria-label="Choose a slide">
             {slides.map((s, i) => (
               <li key={i}>
@@ -85,10 +97,6 @@ export default function Slideshow({ slides }: { slides: Slide[] }) {
               </li>
             ))}
           </ul>
-          <button type="button" className="btn-plain !w-14 !min-h-[52px] !px-0 !py-0 text-2xl" aria-label="Next slide" onClick={() => go(at + 1)}>›</button>
-          <button type="button" className="btn-plain !w-auto !min-h-[52px] !py-0 !px-4 !text-base ml-2" aria-pressed={paused} onClick={() => setPaused((p) => !p)}>
-            {paused ? 'Play' : 'Pause'}
-          </button>
         </div>
       )}
     </section>
