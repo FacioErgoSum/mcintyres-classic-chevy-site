@@ -7,6 +7,7 @@ import { lineName } from '@/lib/lines';
 import { EXTRA_PART_USD, FREIGHT_USD, GS_PACKING_FEE_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
 import AddToCart from '@/components/AddToCart';
 import Gallery from '@/components/Gallery';
+import SaveToList from '@/components/account/SaveToList';
 
 export const revalidate = 600;
 type P = Promise<{ handle: string }>;
@@ -56,6 +57,8 @@ export default async function PartPage({ params }: { params: P }) {
           maxQty={part.stock.status === 'in' ? part.stock.maxQty : undefined}
         />
       )}
+
+      <SaveToList handle={part.handle} />
 
       <section className="space-y-3 rounded-xl border-[3px] border-brand p-5">
         <h2 className="text-xl">Fits</h2>

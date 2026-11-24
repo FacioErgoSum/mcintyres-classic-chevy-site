@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { goldenStarCart, orderFromSession, sendToPrintful } from '@/lib/orders';
 import { orderEmail, sendOrderEmail } from '@/lib/order-email';
+import { saveOrder } from '@/lib/order-store';
 
 // Stripe calls this right after a customer pays.
 // 1. Printed merch goes to Printful.
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
 
   try {
     const order = await orderFromSession(stripe, session.id);
+    await saveOrder(order); // for the customer's account page; never blocks the email
     const [gs, printful] = await Promise.all([goldenStarCart(order), sendToPrintful(order)]);
     await sendOrderEmail(orderEmail(order, gs, printful));
     console.log(`Order ${order.id}: emailed; Printful ${printful.status}`);

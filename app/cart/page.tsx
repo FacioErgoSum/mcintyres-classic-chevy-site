@@ -30,7 +30,7 @@ export default function CartPage() {
 
   const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
   const isMerch = (l: (typeof lines)[number]) => l.handle.startsWith('merch:');
-  // Parts with no stock limit (McIntyre-Made) have a large maxQty; out of stock is 0.
+  // Parts with no stock limit (McIntyre Made) have a large maxQty; out of stock is 0.
   const outOfStock = lines.filter((l) => !isMerch(l) && l.maxQty === 0);
   const overLimit = lines.filter((l) => !isMerch(l) && l.maxQty != null && l.maxQty > 0 && l.qty > l.maxQty);
   const ship = shippingForOrder({

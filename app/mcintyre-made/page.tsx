@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { allParts } from '@/lib/catalog';
 import PartRow from '@/components/PartRow';
 
-export const metadata: Metadata = { title: 'McIntyre-Made parts' };
+export const metadata: Metadata = { title: 'McIntyre Made parts' };
 export const revalidate = 600;
 
 export default async function McIntyreMade() {
   const ours = (await allParts()).filter((p) => p.mcintyreMade);
   return (
     <div className="space-y-6">
-      <h1>McIntyre-Made parts</h1>
+      <h1>McIntyre Made parts</h1>
       <p className="max-w-[60ch]">
         When a repair panel doesn’t exist, we make it. Each one is designed in our shop, fitted on our own cars,
         and laser-cut from American steel.

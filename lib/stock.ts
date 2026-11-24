@@ -5,7 +5,7 @@
 // Keep a cushion so we don't sell a part Golden Star runs out of between
 // stock checks: if Golden Star shows 10 in stock, sell at most 8 (Dad, Nov 2026).
 export const STOCK_BUFFER = 2;
-// Most of one part per order when stock isn't known (McIntyre-Made, other makes).
+// Most of one part per order when stock isn't known (McIntyre Made, other makes).
 export const MAX_PER_ORDER = 50;
 
 export type Stock = {

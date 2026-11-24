@@ -7,7 +7,7 @@ import Img from './Img';
 type Suggestion = { handle: string; name: string; price: number; freight: boolean; mcintyreMade: boolean; maxQty?: number; images: string[]; reason: string };
 const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: Number.isInteger(n) ? 0 : 2 });
 
-// "Add these to your order": the other side, McIntyre-Made parts and the
+// "Add these to your order": the other side, McIntyre Made parts and the
 // small parts that go with the job. One tap adds it to the cart.
 export default function CartSuggestions({ handles }: { handles: string[] }) {
   const [items, setItems] = useState<Suggestion[]>([]);

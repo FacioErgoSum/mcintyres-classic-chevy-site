@@ -10,6 +10,10 @@ export default function Success() {
       <h1>Thank you, your order is in</h1>
       <p className="max-w-[60ch]">Stripe has emailed you a receipt. We’ll order your parts right away and email you tracking when they ship.</p>
       <p className="max-w-[60ch]">Big panels come by truck freight. The driver will call before delivery. Check every panel before you sign, and write any damage on the receipt.</p>
+      <p className="max-w-[60ch]">
+        Want to see this order and its tracking any time? <Link href="/account">Open your account</Link>, or{' '}
+        <Link href="/account/sign-in?next=/account">make one with the same email</Link> you just used and it’ll be there.
+      </p>
       <Link href="/" className="btn-plain">Back to the home page</Link>
     </div>
   );

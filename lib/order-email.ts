@@ -100,6 +100,13 @@ export function orderEmail(
     </table>
     ${order.paymentIntent ? `<p style="margin:14px 0 0">${button(`https://dashboard.stripe.com/${order.live ? '' : 'test/'}payments/${order.paymentIntent}`, 'View payment in Stripe')}</p>` : ''}`,
   );
+  html += section(
+    'When it ships',
+    `<p style="font-size:16px;margin:0 0 8px">Order number <b>${esc(orderNumber(order.id))}</b>. The customer sees this order in their account.</p>
+    <p style="font-size:15px;color:#555;margin:0">To show them tracking: Supabase → Table Editor → <b>order_tracking</b> → Insert row. Paste this as <b>order_id</b>:</p>
+    <p style="font-family:monospace;font-size:14px;background:#f7f7f7;padding:8px;border-radius:6px;word-break:break-all">${esc(order.id)}</p>
+    <p style="font-size:15px;color:#555;margin:0">Fill in <b>carrier</b> (USPS, UPS, FedEx or the freight company) and <b>tracking_number</b>. Add one row per package.</p>`,
+  );
   html += `</div>`;
 
   const text = [
@@ -114,6 +121,9 @@ export function orderEmail(
     ...(ours.length ? ['SHIP FROM SCRANTON', ...ours.map((l) => `${l.qty} × ${l.name}`), ''] : []),
     ...(printed.length ? ['PRINTFUL', ...printed.map((l) => `${l.qty} × ${l.name}`), printful.detail, 'Printful orders: https://www.printful.com/dashboard/default/orders', ''] : []),
     `Total paid: ${money(order.totals.total)}`,
+    '',
+    `Order number ${orderNumber(order.id)}`,
+    `Tracking: add a row to order_tracking in Supabase with order_id ${order.id}`,
   ].join('\n');
 
   return { subject, html, text };
@@ -136,4 +146,9 @@ export async function sendOrderEmail(msg: { subject: string; html: string; text:
     }),
   });
   if (!res.ok) throw new Error(`Resend: HTTP ${res.status} ${await res.text()}`);
+}
+
+/** The short order number customers see (the end of the Stripe checkout id). */
+export function orderNumber(id: string) {
+  return id.slice(-10).toUpperCase();
 }

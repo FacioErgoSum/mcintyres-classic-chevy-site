@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { getPart } from '@/lib/catalog';
 import { shippingForOrder } from '@/lib/shipping';
 import { getMerchLine } from '@/lib/merch';
+import { currentUser } from '@/lib/supabase/server';
 
 // Builds a Stripe Checkout page. Prices always come from the catalog on the
 // server, never from the browser.
@@ -97,11 +98,14 @@ export async function POST(req: Request) {
     printedMerch: lines.filter((l) => l.group === 'printed').length,
   });
   const stripe = new Stripe(key);
+  // Signed-in customers get the order in their account; guests check out as before.
+  const user = await currentUser().catch(() => null);
 
   let session: Stripe.Checkout.Session;
   try {
     session = await stripe.checkout.sessions.create({
       mode: 'payment',
+      ...(user ? { client_reference_id: user.id, ...(user.email ? { customer_email: user.email } : {}) } : {}),
       line_items: lines.map((l) => ({
         quantity: l.qty,
         price_data: {

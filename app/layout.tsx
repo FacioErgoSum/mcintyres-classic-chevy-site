@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import './globals.css';
 import CartLink from '@/components/CartLink';
+import AccountLink from '@/components/AccountLink';
 
 // Header logo: 'wordmark' (script only, reads best on the green bar) or 'logo' (script + Clover).
 // The Clover is the favicon and phone home-screen icon (app/icon.png, app/apple-icon.png, app/favicon.ico).
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <button type="submit" className="sr-only">Search</button>
                 </form>
                 <CartLink />
+                <AccountLink />
               </div>
             </div>
           </div>
@@ -62,11 +64,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav aria-label="Main" className="border-b-[3px] border-onyx/10">
           <ul className="wrap flex flex-wrap gap-x-6 gap-y-2 py-3 text-lg font-bold">
             <li><Link href="/planner">Find parts for my car</Link></li>
-            <li><Link href="/mcintyre-made">McIntyre-Made</Link></li>
+            <li><Link href="/mcintyre-made">McIntyre Made</Link></li>
             <li><Link href="/merch">Merch</Link></li>
             <li><Link href="/ask">Ask a question</Link></li>
             <li><Link href="/about">About us</Link></li>
-            <li><Link href="/other" className="font-normal">Non-Tri-Five parts</Link></li>
+            <li><Link href="/other" className="font-normal">Non Tri-Five parts</Link></li>
           </ul>
         </nav>
         <main id="main" className="wrap py-8">{children}</main>

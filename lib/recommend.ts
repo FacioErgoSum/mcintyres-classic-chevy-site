@@ -4,7 +4,7 @@ import type { Fitment } from './fitment';
 
 // Suggestions for the cart, strongest first:
 //   1. The other side: a left panel in the cart suggests the matching right one.
-//   2. McIntyre-Made parts that fit the same cars and the same job.
+//   2. McIntyre Made parts that fit the same cars and the same job.
 //   3. Parts that usually go with the job: braces, patches and brackets in the
 //      same area of the car, for the same cars, that cost much less than the
 //      main part.

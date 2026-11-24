@@ -28,6 +28,7 @@ export type Order = {
   totals: { items: number; shipping: number; tax: number; total: number };
   shippingLabel: string;
   live: boolean;
+  userId?: string; // the signed-in customer, if they were signed in at checkout
 };
 
 const usd = (cents?: number | null) => (cents ?? 0) / 100;
@@ -88,6 +89,7 @@ export async function orderFromSession(stripe: Stripe, sessionId: string): Promi
     },
     shippingLabel: (rate && typeof rate !== 'string' && rate.display_name) || 'Shipping',
     live: session.livemode,
+    userId: /^[0-9a-f-]{36}$/i.test(session.client_reference_id || '') ? session.client_reference_id! : undefined,
   };
 }
 

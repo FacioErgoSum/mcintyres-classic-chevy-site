@@ -1,5 +1,5 @@
 // Golden Star's vehicle sections. Tri-Five is the site's focus; the rest are
-// listed under "Non-Tri-Five parts".
+// listed under "Non Tri-Five parts".
 export const OTHER_LINES = [
   { id: '49-54-chevy', name: '’49–’54 Chevy cars' },
   { id: 'impala', name: 'Impala and full-size Chevy' },

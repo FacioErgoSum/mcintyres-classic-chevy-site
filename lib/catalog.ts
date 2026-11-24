@@ -321,9 +321,9 @@ export async function findParts({ year, body, area, q }: Filter): Promise<Part[]
   return found.sort((a, b) => scores.get(b.handle)! - scores.get(a.handle)! || a.title.localeCompare(b.title));
 }
 
-// ---------- Non-Tri-Five: looked up from the database on request ----------
+// ---------- Non Tri-Five: looked up from the database on request ----------
 
-/** Non-Tri-Five parts, optionally in one vehicle line and/or matching a search. */
+/** Non Tri-Five parts, optionally in one vehicle line and/or matching a search. */
 export async function findOtherParts({ line, q, limit = 30 }: { line?: string; q?: string; limit?: number }): Promise<{ parts: Part[]; total: number }> {
   const words = wordsOf(q);
   if (URL && KEY) {
