@@ -4,6 +4,12 @@ import type { Metadata } from 'next';
 import { BODIES, YEARS } from '@/lib/fitment';
 import { AREAS } from '@/lib/areas';
 import { findParts } from '@/lib/catalog';
+import ChoiceTile from '@/components/ChoiceTile';
+import ART from '@/lib/planner-art.json';
+
+// Pictures from public/planner/ (see art/planner/README.md). A step switches to
+// picture tiles as soon as one of its pictures exists; until then it's the plain list.
+const art = (name: string): string | undefined => (ART as Record<string, string>)[name];
 
 export const metadata: Metadata = { title: 'Find parts for my car' };
 
@@ -26,6 +32,18 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
   const { year, body, area } = await searchParams;
 
   if (!year) {
+    if (YEARS.some((y) => art(`year-${y}`))) {
+      return (
+        <Step n={1} title="What year is your car?">
+          <ul className="grid gap-4 sm:grid-cols-3">
+            {YEARS.map((y) => (
+              <li key={y}><ChoiceTile href={qs({ year: String(y) })} title={`’${String(y).slice(-2)} Chevy`} art={art(`year-${y}`)} shape="car" /></li>
+            ))}
+          </ul>
+          <p className="max-w-lg"><Link className="choice" href={qs({ year: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for all three years</span></Link></p>
+        </Step>
+      );
+    }
     return (
       <Step n={1} title="What year is your car?">
         <ul className="grid gap-4 max-w-lg">
@@ -43,6 +61,21 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
 
   if (!body) {
     const bodies = BODIES.filter((b) => !(b.id === '4-door-hardtop' && yearNum === 1955));
+    // A picture for this year if there is one (body-nomad-1957), else the general one (body-nomad).
+    const bodyArt = (id: string) => (yearNum && art(`body-${id}-${yearNum}`)) || art(`body-${id}`);
+    if (bodies.some((b) => bodyArt(b.id))) {
+      return (
+        <Step n={2} title={`What kind of ${yearText} Chevy is it?`}>
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {bodies.map((b) => (
+              <li key={b.id}><ChoiceTile href={qs({ year, body: b.id })} title={b.name} note={b.note || undefined} art={bodyArt(b.id)} shape="car" /></li>
+            ))}
+          </ul>
+          <p className="max-w-lg"><Link className="choice" href={qs({ year, body: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for every body style</span></Link></p>
+          <p><Link href="/planner">Change the year</Link></p>
+        </Step>
+      );
+    }
     return (
       <Step n={2} title={`What kind of ${yearText} Chevy is it?`}>
         <ul className="grid gap-4 max-w-lg">
@@ -66,6 +99,20 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
 
   if (!area) {
     const fitting = await findParts({ year: yearNum, body: bodyId });
+    const shown = AREAS.map((a) => ({ a, n: fitting.filter((p) => p.areas.includes(a.id)).length })).filter((x) => x.n);
+    if (shown.some(({ a }) => art(`area-${a.id}`))) {
+      return (
+        <Step n={3} title="What part of the car are you working on?">
+          <p className="text-xl">Your car: <strong>{yearText} {bodyName}</strong>. <Link href={qs({ year })}>Change</Link></p>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            {shown.map(({ a, n }) => (
+              <li key={a.id}><ChoiceTile href={qs({ year, body, area: a.id })} title={a.name} note={`${n} ${n === 1 ? 'part' : 'parts'}`} art={art(`area-${a.id}`)} shape="part" /></li>
+            ))}
+          </ul>
+          <p className="max-w-lg"><Link className="choice" href={qs({ year, body, area: 'all' })}><span className="choice-title">Show me everything</span><span className="choice-note">All {fitting.length} parts that fit this car</span></Link></p>
+        </Step>
+      );
+    }
     return (
       <Step n={3} title="What part of the car are you working on?">
         <p className="text-xl">Your car: <strong>{yearText} {bodyName}</strong>. <Link href={qs({ year })}>Change</Link></p>
