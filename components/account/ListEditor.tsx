@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import type { ListPart } from '@/lib/lists';
 import ListItems from './ListItems';
+import CarCard from './CarCard';
+import type { Car } from '@/lib/cars';
 
-type Props = { list: { id: string; name: string; shared: boolean; shareId: string }; items: ListPart[] };
+type Props = { list: { id: string; name: string; shared: boolean; shareId: string; car: Car | null }; items: ListPart[] };
 
 export default function ListEditor({ list, items: initial }: Props) {
   const router = useRouter();
@@ -14,6 +16,7 @@ export default function ListEditor({ list, items: initial }: Props) {
   const [editing, setEditing] = useState(false);
   const [shared, setShared] = useState(list.shared);
   const [items, setItems] = useState(initial);
+  const [car, setCar] = useState<Car | null>(list.car);
   const [msg, setMsg] = useState('');
   const sb = supabaseBrowser();
   const shareUrl = typeof window === 'undefined' ? '' : `${window.location.origin}/wishlist/${list.shareId}`;
@@ -82,6 +85,8 @@ export default function ListEditor({ list, items: initial }: Props) {
         </div>
       )}
 
+      <CarCard listId={list.id} car={car} onChange={setCar} />
+
       <section className="space-y-3 rounded-xl border-[3px] border-brand p-5" aria-labelledby="share-h">
         <h2 id="share-h" className="text-xl">Share this list</h2>
         {shared ? (
@@ -103,7 +108,7 @@ export default function ListEditor({ list, items: initial }: Props) {
       </section>
 
       {items.length ? (
-        <ListItems items={items} onQty={setQty} />
+        <ListItems items={items} onQty={setQty} car={car} />
       ) : (
         <p className="text-lg">This list is empty. Tap <strong>Save to a list</strong> on any part to add it. <Link href="/planner">Find parts for my car</Link></p>
       )}

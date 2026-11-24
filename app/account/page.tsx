@@ -6,6 +6,7 @@ import { money } from '@/lib/catalog';
 import { trackingUrl } from '@/lib/tracking';
 import NewListButton from '@/components/account/NewListButton';
 import { orderNumber } from '@/lib/order-email';
+import { CAR_COLUMNS, carFromRow, carLabel, carName } from '@/lib/cars';
 
 export const metadata: Metadata = { title: 'Your account', robots: { index: false } };
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,7 @@ type OrderRow = {
   order_items: { id: number; name: string; qty: number; unit_price: number; handle: string | null; kind: string | null }[];
   order_tracking: { id: number; carrier: string | null; tracking_number: string; note: string | null; created_at: string }[];
 };
-type ListRow = { id: string; name: string; shared: boolean; wishlist_items: { count: number }[] };
+type ListRow = { id: string; name: string; shared: boolean; wishlist_items: { count: number }[]; car_year?: number | null; car_body?: string | null; car_series?: string | null; car_engine?: string | null; car_serial?: string | null };
 
 const STATUS: Record<string, string> = {
   paid: 'Paid. We’re ordering your parts.',
@@ -38,7 +39,7 @@ export default async function AccountPage() {
 
   const [orders, lists] = await Promise.all([
     sb.from('orders').select('id, created_at, status, total, shipping_label, live, order_items(id, name, qty, unit_price, handle, kind), order_tracking(id, carrier, tracking_number, note, created_at)').order('created_at', { ascending: false }).limit(50),
-    sb.from('wishlists').select('id, name, shared, wishlist_items(count)').order('created_at'),
+    sb.from('wishlists').select(`id, name, shared, ${CAR_COLUMNS}, wishlist_items(count)`).order('created_at'),
   ]);
   const setupMissing = [orders.error, lists.error].some((e) => e && /relation|does not exist|schema cache/i.test(e.message));
   const name = (user.user_metadata?.full_name || user.user_metadata?.name || '').toString().split(' ')[0];
@@ -58,7 +59,7 @@ export default async function AccountPage() {
 
       <section className="space-y-4" aria-labelledby="lists-h">
         <h2 id="lists-h">Your lists</h2>
-        <p className="max-w-[60ch]">Save parts for a project, or make a list to share with family who are shopping for you.</p>
+        <p className="max-w-[60ch]">Make a list for each project car, or one to share with family who are shopping for you. Save a car from its serial number in <Link href="/planner">Find parts for my car</Link>.</p>
         {(lists.data as ListRow[] | null)?.length ? (
           <ul className="space-y-3">
             {(lists.data as ListRow[]).map((l) => (
@@ -66,8 +67,10 @@ export default async function AccountPage() {
                 <Link href={`/lists/${l.id}`} className="flex items-center justify-between gap-4 rounded-xl border-[3px] border-onyx/15 bg-white p-4 no-underline text-onyx hover:border-brand hover:text-onyx">
                   <span>
                     <span className="block text-xl font-bold underline decoration-brand decoration-2 underline-offset-4">{l.name}</span>
+                    {carFromRow(l) && carName(carFromRow(l)!) !== l.name && <span className="block text-lg">{carName(carFromRow(l)!)}</span>}
+                    {carFromRow(l)?.nickname && <span className="block text-base">{carLabel(carFromRow(l)!)}</span>}
                     <span className="block text-base text-onyx/80">
-                      {l.wishlist_items?.[0]?.count ?? 0} {(l.wishlist_items?.[0]?.count ?? 0) === 1 ? 'part' : 'parts'}
+                      {carFromRow(l) ? 'Project car · ' : ''}{l.wishlist_items?.[0]?.count ?? 0} {(l.wishlist_items?.[0]?.count ?? 0) === 1 ? 'part' : 'parts'}
                       {l.shared ? ' · Shared' : ''}
                     </span>
                   </span>

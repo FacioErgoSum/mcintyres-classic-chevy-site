@@ -2,11 +2,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { supabaseBrowser } from '@/lib/supabase/client';
+import { CAR_COLUMNS, carFromRow, carLabel, carName, partFitsCar, type Car } from '@/lib/cars';
+import type { Fitment } from '@/lib/fitment';
 
-type L = { id: string; name: string; has: boolean };
+type L = { id: string; name: string; has: boolean; car: Car | null };
 
 // "Save to a list" on a part page. Guests are sent to sign in and come back here.
-export default function SaveToList({ handle }: { handle: string }) {
+// fitment: which cars the part fits (Tri-Five parts only), to warn about a list's car.
+export default function SaveToList({ handle, fitment }: { handle: string; fitment?: Fitment }) {
   const [lists, setLists] = useState<L[] | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -21,20 +24,21 @@ export default function SaveToList({ handle }: { handle: string }) {
       return;
     }
     setBusy(true);
-    const { data, error } = await sb.from('wishlists').select('id, name, wishlist_items(handle)').order('created_at');
+    const { data, error } = await sb.from('wishlists').select(`id, name, ${CAR_COLUMNS}, wishlist_items(handle)`).order('created_at');
     if (error) {
       setNote('Lists aren’t available right now.');
       setBusy(false);
       setOpen(true);
       return;
     }
-    let ls: L[] = (data || []).map((w: { id: string; name: string; wishlist_items: { handle: string }[] }) => ({ id: w.id, name: w.name, has: w.wishlist_items.some((i) => i.handle === handle) }));
+    type W = { id: string; name: string; wishlist_items: { handle: string }[] } & Parameters<typeof carFromRow>[0];
+    let ls: L[] = ((data || []) as W[]).map((w) => ({ id: w.id, name: w.name, has: w.wishlist_items.some((i) => i.handle === handle), car: carFromRow(w) }));
     if (!ls.length) {
       // First save: make "My wish list" and put the part in it.
       const { data: w } = await sb.from('wishlists').insert({ name: 'My wish list' }).select('id, name').single();
       if (w) {
         await sb.from('wishlist_items').insert({ wishlist_id: w.id, handle });
-        ls = [{ id: w.id, name: w.name, has: true }];
+        ls = [{ id: w.id, name: w.name, has: true, car: null }];
         setNote(`Saved to ${w.name}.`);
       }
     }
@@ -64,7 +68,7 @@ export default function SaveToList({ handle }: { handle: string }) {
     const { data: w } = await sb.from('wishlists').insert({ name: newName.trim() }).select('id, name').single();
     if (w) {
       await sb.from('wishlist_items').insert({ wishlist_id: w.id, handle });
-      setLists((ls) => [...(ls || []), { id: w.id, name: w.name, has: true }]);
+      setLists((ls) => [...(ls || []), { id: w.id, name: w.name, has: true, car: null }]);
       setNote(`Saved to ${w.name}.`);
       setNewName('');
     }
@@ -86,8 +90,13 @@ export default function SaveToList({ handle }: { handle: string }) {
             <legend className="text-lg font-bold mb-2">Your lists</legend>
             {lists.map((l) => (
               <label key={l.id} className="flex items-center gap-3 text-lg min-h-[48px]">
-                <input type="checkbox" className="h-7 w-7 accent-brand" checked={l.has} disabled={busy} onChange={() => toggle(l)} />
-                {l.name}
+                <input type="checkbox" className="h-7 w-7 accent-brand shrink-0" checked={l.has} disabled={busy} onChange={() => toggle(l)} />
+                <span>
+                  {l.name}
+                  {l.car && carName(l.car) !== l.name && <span className="block text-base text-onyx/75">{carName(l.car)}</span>}
+                  {l.car?.nickname && <span className="block text-base text-onyx/75">{carLabel(l.car)}</span>}
+                  {l.car && fitment && !partFitsCar(fitment, l.car) && <span className="block text-base font-bold text-matador">May not fit this car</span>}
+                </span>
               </label>
             ))}
           </fieldset>

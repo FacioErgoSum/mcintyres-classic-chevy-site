@@ -6,6 +6,7 @@ import { AREAS } from '@/lib/areas';
 import { findParts } from '@/lib/catalog';
 import ChoiceTile from '@/components/ChoiceTile';
 import VinLookup from '@/components/VinLookup';
+import MyCars from '@/components/MyCars';
 import ART from '@/lib/planner-art.json';
 
 // Pictures from public/planner/ (see art/planner/README.md). A step switches to
@@ -36,25 +37,27 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
     if (YEARS.some((y) => art(`year-${y}`))) {
       return (
         <Step n={1} title="What year is your car?">
+          <MyCars />
           <ul className="grid gap-4 sm:grid-cols-3">
             {YEARS.map((y) => (
               <li key={y}><ChoiceTile href={qs({ year: String(y) })} title={`’${String(y).slice(-2)} Chevy`} art={art(`year-${y}`)} shape="car" /></li>
             ))}
           </ul>
-          <p className="max-w-lg"><Link className="choice" href={qs({ year: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for all three years</span></Link></p>
           <VinLookup />
+          <p className="max-w-xl"><Link className="btn-main" href={qs({ year: 'any' })}>Search parts for all three years</Link></p>
         </Step>
       );
     }
     return (
       <Step n={1} title="What year is your car?">
+        <MyCars />
         <ul className="grid gap-4 max-w-lg">
           {YEARS.map((y) => (
             <li key={y}><Link className="choice" href={qs({ year: String(y) })}><span className="choice-title text-2xl">’{String(y).slice(-2)}</span></Link></li>
           ))}
-          <li><Link className="choice" href={qs({ year: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for all three years</span></Link></li>
         </ul>
         <VinLookup />
+        <p className="max-w-xl"><Link className="btn-main" href={qs({ year: 'any' })}>Search parts for all three years</Link></p>
       </Step>
     );
   }

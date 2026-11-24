@@ -9,7 +9,8 @@ Netlify variables are needed (the site already has `SUPABASE_SECRET_KEY`).
 
 ## 1. Tables
 
-Supabase → SQL Editor → run `supabase/accounts.sql`.
+Supabase → SQL Editor → run `supabase/accounts.sql`, then `supabase/project-cars.sql`
+(lets a list be tied to a project car: year, body style, serial number).
 It adds `orders`, `order_items`, `order_tracking`, `wishlists` and `wishlist_items`,
 with rules so each customer only sees their own.
 

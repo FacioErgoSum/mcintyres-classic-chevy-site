@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { addToCart } from '@/lib/cart';
 import type { ListPart } from '@/lib/lists';
 import Img from '@/components/Img';
+import { carMention, partFitsCar, type Car } from '@/lib/cars';
 
 const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: Number.isInteger(n) ? 0 : 2 });
 
 // The parts on a list, with "Add all to cart". onQty is given only to the owner.
-export default function ListItems({ items, onQty }: { items: ListPart[]; onQty?: (handle: string, qty: number) => void }) {
+export default function ListItems({ items, onQty, car = null }: { items: ListPart[]; onQty?: (handle: string, qty: number) => void; car?: Car | null }) {
   const [added, setAdded] = useState<string | null>(null);
   const buyable = items.filter((i) => i.part && i.part.stock.status !== 'out');
   const total = buyable.reduce((s, i) => s + i.part!.price * Math.min(i.qty, i.part!.stock.maxQty), 0);
@@ -35,6 +36,9 @@ export default function ListItems({ items, onQty }: { items: ListPart[]; onQty?:
                 {i.part ? <Link href={`/parts/${i.handle}`} className="text-xl font-bold leading-snug">{i.part.name}</Link> : <p className="text-xl font-bold">No longer sold</p>}
                 {i.part && <p className="text-lg">{money(i.part.price)} each{!onQty && i.qty > 1 ? ` · wants ${i.qty}` : ''}</p>}
                 {i.part?.stock.status === 'out' && <p className="inline-block rounded-md bg-onyx px-3 py-1 text-base font-bold text-white">Out of stock</p>}
+                {car && i.part?.triFive && !partFitsCar(i.part.fitment, car) && (
+                  <p className="text-base font-bold text-matador">May not fit {carMention(car)}. <Link href={`/ask?part=${encodeURIComponent(i.handle)}`}>Ask us</Link></p>
+                )}
               </div>
             </div>
             {onQty && (

@@ -1,8 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { decodeVin, type VinResult } from '@/lib/vin';
 import { BODIES } from '@/lib/fitment';
+import { carName, carToRow, type Car } from '@/lib/cars';
+import { supabaseBrowser } from '@/lib/supabase/client';
 
 const bodyName = (id: string) => BODIES.find((b) => b.id === id)?.name ?? id;
 const yy = (y: number) => `’${String(y).slice(-2)}`;
@@ -12,6 +14,38 @@ const yy = (y: number) => `’${String(y).slice(-2)}`;
 export default function VinLookup() {
   const [value, setValue] = useState('');
   const [result, setResult] = useState<VinResult | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [nickname, setNickname] = useState('');
+
+  // Back from signing in (/planner?vin=…): fill in and read the number again.
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get('vin');
+    if (v) {
+      setValue(v);
+      setResult(decodeVin(v));
+    }
+  }, []);
+
+  // Saves the car as a new list ("project car") and opens it.
+  async function saveCar(base: Car) {
+    const car = { ...base, nickname: nickname.trim() || null };
+    setSaving(true);
+    setSaveError('');
+    const sb = supabaseBrowser();
+    const { data: s } = await sb.auth.getSession();
+    if (!s.session) {
+      window.location.href = `/account/sign-in?next=${encodeURIComponent(`/planner?vin=${value.trim()}`)}`;
+      return;
+    }
+    const { data, error } = await sb.from('wishlists').insert({ name: carName(car).slice(0, 80), ...carToRow(car) }).select('id').single();
+    if (error || !data) {
+      setSaveError('We couldn’t save your car. Please try again.');
+      setSaving(false);
+      return;
+    }
+    window.location.href = `/lists/${data.id}`;
+  }
 
   return (
     <section className="space-y-4 rounded-xl border-[3px] border-brand p-5 max-w-xl" aria-labelledby="vin-h">
@@ -52,6 +86,12 @@ export default function VinLookup() {
               <p className="text-base">Or type the cowl tag style number above and we’ll know for sure.</p>
             </>
           )}
+          <SaveButton
+            nickname={nickname}
+            setNickname={setNickname}
+            busy={saving}
+            onClick={() => saveCar({ year: result.year, body: result.bodies.length === 1 ? result.bodies[0] : null, series: result.series, engine: result.v8 ? 'V8' : 'six-cylinder', serial: value.toUpperCase().replace(/[\s.\-–]/g, '') })}
+          />
         </div>
       )}
 
@@ -70,8 +110,25 @@ export default function VinLookup() {
               </ul>
             </>
           )}
+          {result.year && <SaveButton nickname={nickname} setNickname={setNickname} busy={saving} onClick={() => saveCar({ year: result.year, body: result.body, series: null, engine: null, serial: null })} />}
         </div>
       )}
+      {saveError && <p role="alert" className="text-lg text-matador">{saveError}</p>}
     </section>
+  );
+}
+
+function SaveButton({ busy, onClick, nickname, setNickname }: { busy: boolean; onClick: () => void; nickname: string; setNickname: (s: string) => void }) {
+  return (
+    <div className="pt-3 border-t-[3px] border-brand/20 space-y-3">
+      <div>
+        <label htmlFor="car-nickname" className="label">Give it a nickname (optional)</label>
+        <input id="car-nickname" className="field" placeholder="For example: Big Red" maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} />
+      </div>
+      <button type="button" className="btn-plain" disabled={busy} onClick={onClick}>
+        {busy ? 'Saving…' : 'Save this car to my account'}
+      </button>
+      <p className="text-base">Makes a parts list just for this car, so you can keep track of your project.</p>
+    </div>
   );
 }

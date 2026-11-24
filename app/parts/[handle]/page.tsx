@@ -58,7 +58,7 @@ export default async function PartPage({ params }: { params: P }) {
         />
       )}
 
-      <SaveToList handle={part.handle} />
+      <SaveToList handle={part.handle} fitment={part.triFive ? part.fitment : undefined} />
 
       <section className="space-y-3 rounded-xl border-[3px] border-brand p-5">
         <h2 className="text-xl">Fits</h2>

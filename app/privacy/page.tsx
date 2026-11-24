@@ -38,8 +38,9 @@ export default function Privacy() {
             email address and profile picture with us. We never get your Google or Facebook password, and we can’t post anything for you.
           </li>
           <li>
-            <strong>Lists you save:</strong> the parts on them and the names you give them. A list is private unless you turn on sharing.
-            Then anyone with its link can see the list and your first name.
+            <strong>Lists you save:</strong> the parts on them, the names you give them, and any car you add (its nickname, year, body style
+            and serial number). A list is private unless you turn on sharing. Then anyone with its link can see the list, its car and your
+            first name.
           </li>
           <li>
             <strong>Your cart</strong> is kept in your own web browser, not on our computers, until you check out.

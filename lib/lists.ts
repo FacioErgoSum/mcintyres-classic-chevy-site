@@ -5,7 +5,7 @@ import { getPart, type Part } from './catalog';
 export type ListPart = {
   handle: string;
   qty: number;
-  part: Pick<Part, 'name' | 'price' | 'freight' | 'stock' | 'partNumber'> & { image: string | null; images: string[] } | null; // null: no longer sold
+  part: Pick<Part, 'name' | 'price' | 'freight' | 'stock' | 'partNumber' | 'fitment' | 'triFive'> & { image: string | null; images: string[] } | null; // null: no longer sold
 };
 
 export async function listParts(items: { handle: string; qty: number }[]): Promise<ListPart[]> {
@@ -22,6 +22,8 @@ export async function listParts(items: { handle: string; qty: number }[]): Promi
               freight: p.freight,
               stock: p.stock,
               partNumber: p.partNumber,
+              fitment: p.fitment,
+              triFive: p.triFive,
               image: p.images[0]?.thumb ?? null,
               images: p.images[0] ? [p.images[0].thumb, p.images[0].original] : [],
             }

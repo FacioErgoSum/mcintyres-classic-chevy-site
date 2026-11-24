@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { listParts } from '@/lib/lists';
 import ListEditor from '@/components/account/ListEditor';
+import { CAR_COLUMNS, carFromRow } from '@/lib/cars';
 
 export const metadata: Metadata = { title: 'Your list', robots: { index: false } };
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,7 @@ export default async function ListPage({ params }: { params: Promise<{ id: strin
   // Row level security only returns the signed-in customer's own list.
   const { data: list } = await sb
     .from('wishlists')
-    .select('id, name, shared, share_id, wishlist_items(handle, qty, added_at)')
+    .select(`id, name, shared, share_id, ${CAR_COLUMNS}, wishlist_items(handle, qty, added_at)`)
     .eq('id', id)
     .maybeSingle();
   if (!list) notFound();
@@ -27,7 +28,7 @@ export default async function ListPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="space-y-6">
       <p><Link href="/account">Back to your account</Link></p>
-      <ListEditor list={{ id: list.id, name: list.name, shared: list.shared, shareId: list.share_id }} items={await listParts(items)} />
+      <ListEditor list={{ id: list.id, name: list.name, shared: list.shared, shareId: list.share_id, car: carFromRow(list) }} items={await listParts(items)} />
     </div>
   );
 }
