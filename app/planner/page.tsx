@@ -5,6 +5,7 @@ import { BODIES, YEARS } from '@/lib/fitment';
 import { AREAS } from '@/lib/areas';
 import { findParts } from '@/lib/catalog';
 import ChoiceTile from '@/components/ChoiceTile';
+import VinLookup from '@/components/VinLookup';
 import ART from '@/lib/planner-art.json';
 
 // Pictures from public/planner/ (see art/planner/README.md). A step switches to
@@ -41,6 +42,7 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
             ))}
           </ul>
           <p className="max-w-lg"><Link className="choice" href={qs({ year: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for all three years</span></Link></p>
+          <VinLookup />
         </Step>
       );
     }
@@ -52,6 +54,7 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
           ))}
           <li><Link className="choice" href={qs({ year: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for all three years</span></Link></li>
         </ul>
+        <VinLookup />
       </Step>
     );
   }
@@ -72,6 +75,7 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
             ))}
           </ul>
           <p className="max-w-lg"><Link className="choice" href={qs({ year, body: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for every body style</span></Link></p>
+          <VinLookup />
           <p><Link href="/planner">Change the year</Link></p>
         </Step>
       );
@@ -89,6 +93,7 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
           ))}
           <li><Link className="choice" href={qs({ year, body: 'any' })}><span className="choice-title">I’m not sure</span><span className="choice-note">Show parts for every body style</span></Link></li>
         </ul>
+        <VinLookup />
         <p><Link href="/planner">Change the year</Link></p>
       </Step>
     );
