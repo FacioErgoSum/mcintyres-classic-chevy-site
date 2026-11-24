@@ -17,13 +17,20 @@ export default function VinLookup() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [nickname, setNickname] = useState('');
+  const [pickBody, setPickBody] = useState<string | null>(null);
+  const [pickYear, setPickYear] = useState<number | null>(null);
+  const lookUp = (v: string) => {
+    setResult(decodeVin(v));
+    setPickBody(null);
+    setPickYear(null);
+  };
 
   // Back from signing in (/planner?vin=…): fill in and read the number again.
   useEffect(() => {
     const v = new URLSearchParams(window.location.search).get('vin');
     if (v) {
       setValue(v);
-      setResult(decodeVin(v));
+      lookUp(v);
     }
   }, []);
 
@@ -54,7 +61,7 @@ export default function VinLookup() {
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
-          setResult(decodeVin(value));
+          lookUp(value);
         }}
       >
         <label htmlFor="vin" className="label">Serial number or cowl tag style number</label>
@@ -71,46 +78,55 @@ export default function VinLookup() {
       {result?.kind === 'error' && <p role="alert" className="rounded-lg bg-matador/10 border-[3px] border-matador p-4 text-lg">{result.message}</p>}
 
       {result?.kind === 'serial' && (
-        <div role="status" className="space-y-3 rounded-lg bg-brand-light p-4">
+        <div role="status" className="space-y-4 rounded-lg bg-brand-light p-4">
           <p className="text-xl font-bold">{result.summary}</p>
-          {result.bodies.length === 1 ? (
-            <Link className="btn-main" href={`/planner?year=${result.year}&body=${result.bodies[0]}`}>Show parts for my {yy(result.year)} {bodyName(result.bodies[0])}</Link>
-          ) : (
+          {result.bodies.length > 1 && (
             <>
               <p className="text-lg">The serial number doesn’t say the body style. Which one is it?</p>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {result.bodies.map((b) => (
-                  <li key={b}><Link className="choice !min-h-0 !py-3" href={`/planner?year=${result.year}&body=${b}`}><span className="choice-title !text-lg">{bodyName(b)}</span></Link></li>
+                  <li key={b}><Pick on={pickBody === b} onClick={() => setPickBody(b)}>{bodyName(b)}</Pick></li>
                 ))}
               </ul>
               <p className="text-base">Or type the cowl tag style number above and we’ll know for sure.</p>
             </>
           )}
-          <SaveButton
-            nickname={nickname}
-            setNickname={setNickname}
-            busy={saving}
-            onClick={() => saveCar({ year: result.year, body: result.bodies.length === 1 ? result.bodies[0] : null, series: result.series, engine: result.v8 ? 'V8' : 'six-cylinder', serial: value.toUpperCase().replace(/[\s.\-–]/g, '') })}
-          />
+          {(pickBody || result.bodies.length === 1) && (
+            <Next
+              year={result.year}
+              body={pickBody || result.bodies[0]}
+              nickname={nickname}
+              setNickname={setNickname}
+              busy={saving}
+              onSave={() => saveCar({ year: result.year, body: pickBody || result.bodies[0], series: result.series, engine: result.v8 ? 'V8' : 'six-cylinder', serial: value.toUpperCase().replace(/[\s.\-–]/g, '') })}
+            />
+          )}
         </div>
       )}
 
       {result?.kind === 'style' && (
-        <div role="status" className="space-y-3 rounded-lg bg-brand-light p-4">
+        <div role="status" className="space-y-4 rounded-lg bg-brand-light p-4">
           <p className="text-xl font-bold">{result.summary}</p>
-          {result.year ? (
-            <Link className="btn-main" href={`/planner?year=${result.year}&body=${result.body}`}>Show parts for my {yy(result.year)} {bodyName(result.body)}</Link>
-          ) : (
+          {!result.year && (
             <>
               <p className="text-lg">Which year? (It’s the two digits before the style number on the tag, like 57-.)</p>
               <ul className="flex flex-wrap gap-2">
                 {[1955, 1956, 1957].map((y) => (
-                  <li key={y}><Link className="btn-plain !w-auto" href={`/planner?year=${y}&body=${result.body}`}>{yy(y)}</Link></li>
+                  <li key={y}><Pick on={pickYear === y} onClick={() => setPickYear(y)}>{yy(y)}</Pick></li>
                 ))}
               </ul>
             </>
           )}
-          {result.year && <SaveButton nickname={nickname} setNickname={setNickname} busy={saving} onClick={() => saveCar({ year: result.year, body: result.body, series: null, engine: null, serial: null })} />}
+          {(result.year || pickYear) && (
+            <Next
+              year={(result.year || pickYear)!}
+              body={result.body}
+              nickname={nickname}
+              setNickname={setNickname}
+              busy={saving}
+              onSave={() => saveCar({ year: (result.year || pickYear)!, body: result.body, series: null, engine: null, serial: null })}
+            />
+          )}
         </div>
       )}
       {saveError && <p role="alert" className="text-lg text-matador">{saveError}</p>}
@@ -118,17 +134,37 @@ export default function VinLookup() {
   );
 }
 
-function SaveButton({ busy, onClick, nickname, setNickname }: { busy: boolean; onClick: () => void; nickname: string; setNickname: (s: string) => void }) {
+// A choice that stays selected (it doesn't leave the page).
+function Pick({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <div className="pt-3 border-t-[3px] border-brand/20 space-y-3">
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={`w-full rounded-xl border-[3px] px-4 py-3 text-left text-lg font-bold ${on ? 'border-brand bg-brand text-white' : 'border-brand bg-white text-onyx hover:bg-white/70'}`}
+    >
+      {on && <span aria-hidden>✓ </span>}
+      {children}
+    </button>
+  );
+}
+
+// After the car is known: save it to the account, or just search.
+function Next({ year, body, busy, onSave, nickname, setNickname }: { year: number; body: string; busy: boolean; onSave: () => void; nickname: string; setNickname: (s: string) => void }) {
+  return (
+    <div className="pt-4 border-t-[3px] border-brand/20 space-y-3">
+      <p className="text-xl font-bold">Your car: {yy(year)} {bodyName(body)}</p>
+      <p className="text-lg">Save it to your account to keep a parts list for this car, or go straight to the parts.</p>
       <div>
         <label htmlFor="car-nickname" className="label">Give it a nickname (optional)</label>
         <input id="car-nickname" className="field" placeholder="For example: Big Red" maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} />
       </div>
-      <button type="button" className="btn-plain" disabled={busy} onClick={onClick}>
-        {busy ? 'Saving…' : 'Save this car to my account'}
-      </button>
-      <p className="text-base">Makes a parts list just for this car, so you can keep track of your project.</p>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button type="button" className="btn-main sm:!w-auto" disabled={busy} onClick={onSave}>
+          {busy ? 'Saving…' : 'Save this car to my account'}
+        </button>
+        <Link className="btn-plain sm:!w-auto" href={`/planner?year=${year}&body=${body}`}>No, just search</Link>
+      </div>
     </div>
   );
 }

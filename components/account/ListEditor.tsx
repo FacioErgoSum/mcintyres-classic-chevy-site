@@ -113,7 +113,7 @@ export default function ListEditor({ list, items: initial }: Props) {
         <p className="text-lg">This list is empty. Tap <strong>Save to a list</strong> on any part to add it. <Link href="/planner">Find parts for my car</Link></p>
       )}
 
-      <button type="button" className="btn-plain" onClick={remove}>Delete this list</button>
+      <button type="button" className="btn bg-matador text-white hover:bg-matador-dark hover:text-white" onClick={remove}>Delete this list</button>
     </div>
   );
 }
