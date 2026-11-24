@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getPart } from '@/lib/catalog';
+import { BODIES } from '@/lib/fitment';
+import { PHOTO_LINK_DAYS, sendQuestionEmail } from '@/lib/question-email';
 
 // Saves a customer question and photos to Supabase (table consult_requests,
-// private bucket customer-photos). See supabase/questions.sql.
+// private bucket customer-photos), then emails it to you. See supabase/questions.sql.
 export async function POST(req: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secret = process.env.SUPABASE_SECRET_KEY;
@@ -30,12 +33,15 @@ export async function POST(req: Request) {
     else console.error(`Ask form: photo upload failed: ${error.message}`);
   }
 
+  const year = Number(text('year', 4)) || null;
+  const body = text('body', 40) || null;
+  const handle = text('part', 200) || null;
   const { error } = await db.from('consult_requests').insert({
     name,
     email,
-    car_year: Number(text('year', 4)) || null,
-    body_style: text('body', 40) || null,
-    part_handle: text('part', 200) || null,
+    car_year: year,
+    body_style: body,
+    part_handle: handle,
     message,
     photo_paths: paths,
   });
@@ -48,6 +54,25 @@ export async function POST(req: Request) {
         : '';
     console.error(`Ask form: saving the message failed: ${error.message}${hint}`);
     return NextResponse.json({ error: 'Your message didn’t save. Please email us at g3chevyparts@gmail.com instead, and we’ll look into it.' }, { status: 500 });
+  }
+
+  // Email it. The message is already saved, so a failed email doesn't fail the form.
+  try {
+    const signed = paths.length ? (await db.storage.from('customer-photos').createSignedUrls(paths, PHOTO_LINK_DAYS * 86400)).data || [] : [];
+    const part = handle ? await getPart(handle).catch(() => null) : null;
+    const raw = (process.env.NEXT_PUBLIC_SITE_URL || '').trim().replace(/\/+$/, '');
+    const site = raw ? (/^https?:\/\//.test(raw) ? raw : `https://${raw}`) : new URL(req.url).origin;
+    await sendQuestionEmail({
+      name,
+      email,
+      year,
+      body: BODIES.find((b) => b.id === body)?.name ?? body,
+      part: part ? { name: part.name, url: `${site}/parts/${part.handle}` } : null,
+      message,
+      photos: signed.map((s) => s.signedUrl).filter((u): u is string => !!u),
+    });
+  } catch (e) {
+    console.error(`Ask form: saved, but the email didn’t send: ${e instanceof Error ? e.message : e}`);
   }
   return NextResponse.json({ ok: true });
 }

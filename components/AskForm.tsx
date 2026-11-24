@@ -3,6 +3,28 @@ import { useState } from 'react';
 
 type Props = { years: number[]; bodies: { id: string; name: string }[]; partName?: string; partHandle?: string };
 
+// Phone photos are often 3–5 MB each, and the site's server only accepts about
+// 6 MB per message. So photos are shrunk here, on the customer's phone, to
+// about 1600 pixels across (still plenty to see rust), before sending.
+const MAX_SIDE = 1600;
+const MAX_TOTAL = 5.5 * 1024 * 1024;
+
+async function shrink(file: File): Promise<Blob> {
+  try {
+    const img = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, MAX_SIDE / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    img.close();
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.82));
+    return blob && blob.size < file.size ? blob : file;
+  } catch {
+    return file; // a format the browser can't open; send it as it is
+  }
+}
+
 export default function AskForm({ years, bodies, partName, partHandle }: Props) {
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -15,7 +37,14 @@ export default function AskForm({ years, bodies, partName, partHandle }: Props) 
     const form = new FormData(e.currentTarget);
     const files = form.getAll('photos').filter((f): f is File => f instanceof File && f.size > 0);
     if (files.length > 6) { setError('Please send 6 photos or fewer.'); setState('error'); return; }
-    if (files.some((f) => f.size > 10 * 1024 * 1024)) { setError('Each photo needs to be under 10 MB.'); setState('error'); return; }
+    const small = await Promise.all(files.map(shrink));
+    if (small.reduce((n, b) => n + b.size, 0) > MAX_TOTAL) {
+      setError('Those photos are too big to send together. Please send fewer photos.');
+      setState('error');
+      return;
+    }
+    form.delete('photos');
+    small.forEach((b, i) => form.append('photos', b, b === files[i] ? files[i].name : `photo-${i + 1}.jpg`));
     try {
       const res = await fetch('/api/ask', { method: 'POST', body: form });
       const data = await res.json().catch(() => ({}));
@@ -78,7 +107,6 @@ export default function AskForm({ years, bodies, partName, partHandle }: Props) 
         <input className="sr-only" id="photos" name="photos" type="file" accept="image/*" multiple aria-labelledby="photos-label"
           onChange={(e) => setCount(e.currentTarget.files?.length ?? 0)} />
         <p className="text-lg mt-2" aria-live="polite">{count ? `${count} photo${count === 1 ? '' : 's'} added.` : 'No photos added yet.'}</p>
-        <p className="text-base text-onyx/75 mt-1">Take them in daylight, standing back a few feet so we can see where the part goes.</p>
       </div>
       {error && <p role="alert" className="rounded-lg bg-matador/10 border-[3px] border-matador p-4 text-lg">{error}</p>}
       <button className="btn-main text-xl" type="submit" disabled={state === 'sending'}>

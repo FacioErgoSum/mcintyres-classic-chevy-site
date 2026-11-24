@@ -130,16 +130,17 @@ export function orderEmail(
 }
 
 /** Sends through Resend (resend.com). */
-export async function sendOrderEmail(msg: { subject: string; html: string; text: string }) {
+export async function sendOrderEmail(msg: { subject: string; html: string; text: string; replyTo?: string; to?: string; from?: string }) {
   const key = process.env.RESEND_API_KEY;
-  const to = (process.env.ORDER_EMAIL_TO || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const to = (msg.to || process.env.ORDER_EMAIL_TO || '').split(',').map((s) => s.trim()).filter(Boolean);
   if (!key || !to.length) throw new Error('RESEND_API_KEY or ORDER_EMAIL_TO is not set');
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: process.env.ORDER_EMAIL_FROM || 'McIntyre’s Orders <onboarding@resend.dev>',
+      from: msg.from || process.env.ORDER_EMAIL_FROM || 'McIntyre’s Orders <onboarding@resend.dev>',
       to,
+      ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
       subject: msg.subject,
       html: msg.html,
       text: msg.text,
