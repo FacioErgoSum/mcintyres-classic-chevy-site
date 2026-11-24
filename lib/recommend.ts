@@ -42,6 +42,7 @@ export async function recommend(handles: string[], max = 4): Promise<Suggestion[
   const offer = (part: Part, score: number, reason: string) => {
     if (taken.has(part.handle)) return;
     if (part.freight && !cartHasFreight) return;
+    if (part.stock.status === 'out') return;
     const prev = scored.get(part.handle);
     if (!prev || prev.score < score) scored.set(part.handle, { part, score, reason });
   };

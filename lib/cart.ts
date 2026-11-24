@@ -15,6 +15,7 @@ export type CartLine = {
   freight: boolean;
   href?: string; // page to link back to; parts default to /parts/<handle>
   kind?: 'part' | 'mailer' | 'printed';
+  maxQty?: number; // most that can be ordered (Golden Star's stock less a cushion); re-checked at checkout
 };
 const KEY = 'mcintyres-cart-v1';
 const EVENT = 'mcintyres-cart-change';
@@ -33,12 +34,15 @@ function write(lines: CartLine[]) {
   window.dispatchEvent(new Event(EVENT));
 }
 
-export function addToCart(line: Omit<CartLine, 'qty'>, qty = 1) {
+// Returns how many are in the cart afterwards (capped at the part's limit).
+export function addToCart(line: Omit<CartLine, 'qty'>, qty = 1): number {
   const lines = read();
-  const found = lines.find((l) => l.handle === line.handle);
-  if (found) found.qty += qty;
-  else lines.push({ ...line, qty });
-  write(lines);
+  const cap = (n: number) => (line.maxQty != null ? Math.min(n, line.maxQty) : n);
+  let found = lines.find((l) => l.handle === line.handle);
+  if (found) Object.assign(found, line, { qty: cap(found.qty + qty) });
+  else lines.push((found = { ...line, qty: cap(qty) }));
+  write(lines.filter((l) => l.qty > 0));
+  return found.qty;
 }
 export function setQty(handle: string, qty: number) {
   write(read().map((l) => (l.handle === handle ? { ...l, qty } : l)).filter((l) => l.qty > 0));

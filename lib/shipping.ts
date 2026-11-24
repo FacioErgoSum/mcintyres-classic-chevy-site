@@ -1,9 +1,13 @@
 // Shipping rules. Golden Star ships big sheet metal by freight and charged
 // McIntyre's $200–$460 per order for it, so big panels must carry freight.
-// Change these numbers here; checkout and the cart both read them.
+// Change these numbers here; checkout, the cart and the part pages all read them.
 
-export const SMALL_PARCEL_USD = 20; // per order, parts that fit a normal box (Dad, Nov 2026)
+// Golden Star charges a packing fee on every order, before shipping (Dad, Nov 2026).
+// Shown as its own line so customers see where the cost comes from.
+export const GS_PACKING_FEE_USD = 10;
+export const SMALL_PARCEL_USD = 20; // ground shipping for the first part in a box (Dad, Nov 2026)
 export const FREIGHT_USD = 275; // per order containing any big panel (Dad, Nov 2026)
+export const EXTRA_PART_USD = 3; // each part after the first, counting quantities (Dad, Nov 2026)
 
 const BIG = /floor pan|trunk floor|cargo floor|quarter panel|hood|fender|door shell|door skin|bumper|body shell|frame assembly|roof panel|tailgate|trunk lid|firewall|front end|sheet metal kit|radiator support|inner quarter panel complete|deck filler|rocker panel|wheelhouse|toe board|dash panel/i;
 const SMALL = /bracket|patch|molding|moulding|clip|hinge|latch|gasket|retainer|emblem|script|bezel|handle|louver|splash|guard|bullet|insert|rod|plate|tool|hardware|cover|extension tube|support bar|filler neck|strap|nut|bolt/i;
@@ -33,22 +37,28 @@ export const MERCH_MAILER_USD = 5; // small merch only, no parts in the order
 export const PRINTFUL_SHIPPING_USD = 6; // per order with printed merch; match Printful's real rate once set up
 
 export type ShippingLine = { label: string; amount: number };
+// One part line in an order. goldenStar: ships from Golden Star (pays their packing fee).
+export type ShipPart = { freight: boolean; qty: number; goldenStar: boolean };
 
-// The whole order: parts (freight flags), small merch from Scranton, printed merch.
-export function shippingForOrder(o: { partsFreight: boolean[]; mailerMerch: number; printedMerch: number }) {
+// The whole order: parts, small merch from Scranton, printed merch.
+export function shippingForOrder(o: { parts: ShipPart[]; mailerMerch: number; printedMerch: number }) {
   const lines: ShippingLine[] = [];
-  if (o.partsFreight.length) {
-    lines.push(o.partsFreight.some(Boolean) ? { label: 'Freight Shipping', amount: FREIGHT_USD } : { label: 'Ground Shipping', amount: SMALL_PARCEL_USD });
+  const count = o.parts.reduce((s, p) => s + Math.max(1, p.qty), 0);
+  const freight = o.parts.some((p) => p.freight);
+  if (count > 0) {
+    lines.push(freight ? { label: 'Freight shipping', amount: FREIGHT_USD } : { label: 'Ground shipping', amount: SMALL_PARCEL_USD });
+    if (count > 1) lines.push({ label: `${count - 1} more ${count - 1 === 1 ? 'part' : 'parts'} × ${usd(EXTRA_PART_USD)}`, amount: (count - 1) * EXTRA_PART_USD });
+    if (o.parts.some((p) => p.goldenStar)) lines.push({ label: 'Warehouse packing fee', amount: GS_PACKING_FEE_USD });
   } else if (o.mailerMerch > 0) {
-    lines.push({ label: 'Merch Shipping', amount: MERCH_MAILER_USD });
+    lines.push({ label: 'Merch shipping', amount: MERCH_MAILER_USD });
   }
-  if (o.printedMerch > 0) lines.push({ label: o.partsFreight.length || o.mailerMerch ? 'Printed Merch Shipping' : 'Merch Shipping', amount: PRINTFUL_SHIPPING_USD });
+  if (o.printedMerch > 0) lines.push({ label: count || o.mailerMerch ? 'Printed merch shipping' : 'Merch shipping', amount: PRINTFUL_SHIPPING_USD });
   const amount = lines.reduce((s, l) => s + l.amount, 0);
-  return { lines, amount, label: lines.map((l) => l.label).join(' + ') || 'Shipping', freight: o.partsFreight.some(Boolean) };
+  // Stripe shows one shipping line, so its name carries the breakdown.
+  const label = lines.length > 1 ? lines.map((l) => `${l.label} ${usd(l.amount)}`).join(' + ') : lines[0]?.label || 'Shipping';
+  return { lines, amount, label, freight };
 }
 
-// Parts only (older callers)
-export function shippingFor(freightFlags: boolean[]) {
-  const r = shippingForOrder({ partsFreight: freightFlags, mailerMerch: 0, printedMerch: 0 });
-  return { label: r.label, amount: r.amount, freight: r.freight };
+function usd(n: number) {
+  return `$${Number.isInteger(n) ? n : n.toFixed(2)}`;
 }

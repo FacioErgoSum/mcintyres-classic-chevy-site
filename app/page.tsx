@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Img from '@/components/Img';
 import { allParts, money } from '@/lib/catalog';
-import { FREIGHT_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
+import { EXTRA_PART_USD, FREIGHT_USD, GS_PACKING_FEE_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
 
 export const revalidate = 600;
 
@@ -77,8 +77,10 @@ export default async function Home() {
       <section className="space-y-4">
         <h2>How shipping works</h2>
         <ul className="list-disc pl-7 space-y-2 max-w-[60ch]">
-          <li>Small parts ship in a box for {money(SMALL_PARCEL_USD)} per order.</li>
-          <li>Big sheet metal, like floor pans, quarter panels and hoods, ships by truck freight for {money(FREIGHT_USD)} per order, no matter how many panels.</li>
+          <li>Small parts ship in a box for {money(SMALL_PARCEL_USD)}, plus {money(EXTRA_PART_USD)} for each extra part.</li>
+          <li>Big sheet metal, like floor pans, quarter panels and hoods, ships by truck freight for {money(FREIGHT_USD)} per order, plus {money(EXTRA_PART_USD)} for each extra part.</li>
+          <li>Our warehouse charges a {money(GS_PACKING_FEE_USD)} packing fee on every order. We list it on its own line so you can see exactly what you’re paying for.</li>
+          <li>Parts marked out of stock can’t be ordered until they’re back, so you’re never charged for a part that can’t ship.</li>
           <li>Check every panel when it arrives, before you sign for it. Write any damage on the delivery receipt.</li>
         </ul>
       </section>

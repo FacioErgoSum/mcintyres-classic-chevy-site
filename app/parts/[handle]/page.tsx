@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { getPart, money } from '@/lib/catalog';
 import { describeFitment } from '@/lib/fitment';
 import { lineName } from '@/lib/lines';
-import { FREIGHT_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
+import { EXTRA_PART_USD, FREIGHT_USD, GS_PACKING_FEE_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
 import AddToCart from '@/components/AddToCart';
 import Gallery from '@/components/Gallery';
 
@@ -27,16 +27,35 @@ export default async function PartPage({ params }: { params: P }) {
 
       <Gallery photos={part.images} name={part.name} />
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <p className="text-3xl font-bold">{money(part.price)}</p>
-        <p className="text-lg">
-          {part.freight
-            ? `Freight Shipping: ${money(FREIGHT_USD)}`
-            : `Ground Shipping: ${money(SMALL_PARCEL_USD)}`}
-        </p>
+        {part.stock.status === 'in' && <p className="inline-block rounded-md bg-brand-light px-3 py-1 text-lg font-bold">In stock</p>}
+        {part.stock.status === 'out' && <p className="inline-block rounded-md bg-onyx px-3 py-1 text-lg font-bold text-white">Out of stock</p>}
+        <dl className="text-lg space-y-1">
+          <div>
+            <dt className="inline">{part.freight ? 'Freight shipping' : 'Ground shipping'}: </dt>
+            <dd className="inline">{money(part.freight ? FREIGHT_USD : SMALL_PARCEL_USD)} per order, plus {money(EXTRA_PART_USD)} for each extra part</dd>
+          </div>
+          {!part.mcintyreMade && (
+            <div>
+              <dt className="inline">Warehouse packing fee: </dt>
+              <dd className="inline">{money(GS_PACKING_FEE_USD)} per order. Our warehouse charges it on every order, so we show it instead of hiding it in the price.</dd>
+            </div>
+          )}
+        </dl>
       </div>
 
-      <AddToCart line={{ handle: part.handle, name: part.name, price: part.price, images: part.images[0] ? [part.images[0].thumb, part.images[0].original] : [], freight: part.freight }} />
+      {part.stock.status === 'out' ? (
+        <section className="space-y-3 rounded-xl border-[3px] border-onyx/30 p-5">
+          <p className="text-xl font-bold">This part is out of stock right now.</p>
+          <p className="text-lg">We only take orders for parts we can ship, so you won’t be charged and left waiting. <Link href={`/ask?part=${encodeURIComponent(part.handle)}`}>Ask us when it’ll be back</Link>.</p>
+        </section>
+      ) : (
+        <AddToCart
+          line={{ handle: part.handle, name: part.name, price: part.price, images: part.images[0] ? [part.images[0].thumb, part.images[0].original] : [], freight: part.freight }}
+          maxQty={part.stock.status === 'in' ? part.stock.maxQty : undefined}
+        />
+      )}
 
       <section className="space-y-3 rounded-xl border-[3px] border-brand p-5">
         <h2 className="text-xl">Fits</h2>

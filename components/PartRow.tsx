@@ -20,6 +20,7 @@ export default function PartRow({ part }: { part: Part }) {
             <span className="block text-2xl font-bold">{money(part.price)}</span>
             <span className="block text-base text-onyx/80 mt-1">{part.triFive ? `Fits ${describeFitment(part.fitment)}` : `For ${lineName(part.line)}`}</span>
             {part.mcintyreMade && <span className="inline-block mt-2 rounded-md bg-matador px-3 py-1 text-base font-bold text-white">Made by McIntyre’s</span>}
+            {part.stock.status === 'out' && <span className="inline-block mt-2 rounded-md bg-onyx px-3 py-1 text-base font-bold text-white">Out of stock</span>}
           </span>
         </span>
       </Link>

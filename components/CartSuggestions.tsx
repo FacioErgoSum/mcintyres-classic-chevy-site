@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { addToCart } from '@/lib/cart';
 import Img from './Img';
 
-type Suggestion = { handle: string; name: string; price: number; freight: boolean; mcintyreMade: boolean; images: string[]; reason: string };
+type Suggestion = { handle: string; name: string; price: number; freight: boolean; mcintyreMade: boolean; maxQty?: number; images: string[]; reason: string };
 const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: Number.isInteger(n) ? 0 : 2 });
 
 // "Add these to your order": the other side, McIntyre-Made parts and the
@@ -38,7 +38,7 @@ export default function CartSuggestions({ handles }: { handles: string[] }) {
             <button
               type="button"
               className="btn-main !min-h-[52px] !py-2 !px-2 !text-base whitespace-nowrap"
-              onClick={() => addToCart({ handle: s.handle, name: s.name, price: s.price, images: s.images, freight: s.freight })}
+              onClick={() => addToCart({ handle: s.handle, name: s.name, price: s.price, images: s.images, freight: s.freight, maxQty: s.maxQty })}
             >
               Add to order
             </button>

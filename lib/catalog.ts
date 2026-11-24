@@ -6,6 +6,7 @@ import { areasFor, type AreaId } from './areas';
 import { needsFreight } from './shipping';
 import { lineFromCategories } from './lines';
 import { shortYears } from './years';
+import { stockFor, type Stock } from './stock';
 
 export type Photo = { thumb: string; large: string; original: string };
 
@@ -24,6 +25,7 @@ export type Part = {
   triFive: boolean;
   mcintyreMade: boolean;
   freight: boolean;
+  stock: Stock; // Golden Star's stock and the most a customer can order
 };
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,12 +44,28 @@ type Row = {
   retail_price: number | null;
   available: boolean | null;
   vehicle_line?: string | null;
+  stock_status?: string | null;
+  stock_qty?: number | null;
   product_images: { position: number; source_url: string | null; storage_path: string | null }[];
   product_categories: { category_path: string }[];
 };
 
-const COLUMNS =
+const BASE_COLUMNS =
   'handle, supplier_id, part_number, title, plain_name, description, our_description, retail_price, available, vehicle_line, product_images(position, source_url, storage_path), product_categories(category_path)';
+// Stock columns come from the scraper's supabase/2026-11-stock.sql. Until that's
+// been run, the site reads without them and sells every part as before.
+let hasStockColumns = true;
+const columns = () => (hasStockColumns ? BASE_COLUMNS.replace('vehicle_line, ', 'vehicle_line, stock_status, stock_qty, ') : BASE_COLUMNS);
+// Runs a query, and once more without the stock columns if they don't exist yet.
+async function withColumns<T extends { error: { message: string } | null }>(run: (cols: string) => PromiseLike<T>): Promise<T> {
+  const res = await run(columns());
+  if (res.error && hasStockColumns && /stock_/.test(res.error.message)) {
+    hasStockColumns = false;
+    console.warn('Supabase has no stock columns yet (run golden-star-scraper/supabase/2026-11-stock.sql); selling without stock limits.');
+    return run(columns());
+  }
+  return res;
+}
 
 // Golden Star's copy repeats the title and advertises Golden Star; keep the facts.
 function cleanDescription(text: string, title: string): string {
@@ -149,6 +167,7 @@ function toPart(r: Row): Part | null {
     triFive,
     mcintyreMade: r.supplier_id === 'mcintyre',
     freight: r.supplier_id === 'mcintyre' ? false : needsFreight(r.title, Number(r.retail_price), r.description),
+    stock: stockFor(r.stock_status, r.stock_qty, r.supplier_id === 'mcintyre'),
   };
 }
 
@@ -167,16 +186,18 @@ const db = () => createClient(URL!, KEY!, { auth: { persistSession: false } });
 async function triFiveFromSupabase(): Promise<Part[]> {
   const rows: Row[] = [];
   for (let from = 0; ; from += 1000) {
-    let res: { data: unknown[] | null; error: { message: string } | null } = await db()
-      .from('products')
-      .select(COLUMNS)
-      .eq('is_published', true)
-      .or('vehicle_line.eq.tri-five,vehicle_line.is.null')
-      .order('title')
-      .range(from, from + 999);
+    let res: { data: unknown[] | null; error: { message: string } | null } = await withColumns((cols) =>
+      db()
+        .from('products')
+        .select(cols)
+        .eq('is_published', true)
+        .or('vehicle_line.eq.tri-five,vehicle_line.is.null')
+        .order('title')
+        .range(from, from + 999),
+    );
     if (res.error && /vehicle_line/.test(res.error.message)) {
       // supabase/2026-11-full-catalog.sql hasn't been run yet: everything is Tri-Five
-      res = await db().from('products').select(COLUMNS.replace('vehicle_line, ', '')).eq('is_published', true).order('title').range(from, from + 999);
+      res = await db().from('products').select(BASE_COLUMNS.replace('vehicle_line, ', '')).eq('is_published', true).order('title').range(from, from + 999);
     }
     if (res.error) throw new Error(`Supabase: ${res.error.message}`);
     rows.push(...(res.data as unknown as Row[]));
@@ -238,7 +259,7 @@ export async function getPart(handle: string): Promise<Part | null> {
   const tri = (await allParts()).find((p) => p.handle === handle);
   if (tri) return tri;
   if (URL && KEY) {
-    const { data } = await db().from('products').select(COLUMNS).eq('is_published', true).eq('handle', handle).maybeSingle();
+    const { data } = await withColumns((cols) => db().from('products').select(cols).eq('is_published', true).eq('handle', handle).maybeSingle());
     return data ? toPart(data as unknown as Row) : null;
   }
   if (LOCAL) {
@@ -306,10 +327,12 @@ export async function findParts({ year, body, area, q }: Filter): Promise<Part[]
 export async function findOtherParts({ line, q, limit = 30 }: { line?: string; q?: string; limit?: number }): Promise<{ parts: Part[]; total: number }> {
   const words = wordsOf(q);
   if (URL && KEY) {
-    let query = db().from('products').select(COLUMNS, { count: 'exact' }).eq('is_published', true).not('vehicle_line', 'is', null).neq('vehicle_line', 'tri-five');
-    if (line) query = query.eq('vehicle_line', line);
-    for (const w of words) query = query.or(`title.ilike.%${w}%,part_number.ilike.%${w}%`);
-    const { data, count, error } = await query.order('title').range(0, limit - 1);
+    const { data, count, error } = await withColumns((cols) => {
+      let query = db().from('products').select(cols, { count: 'exact' }).eq('is_published', true).not('vehicle_line', 'is', null).neq('vehicle_line', 'tri-five');
+      if (line) query = query.eq('vehicle_line', line);
+      for (const w of words) query = query.or(`title.ilike.%${w}%,part_number.ilike.%${w}%`);
+      return query.order('title').range(0, limit - 1);
+    });
     if (error) {
       if (/vehicle_line/.test(error.message)) return { parts: [], total: 0 }; // full catalog not loaded yet
       throw new Error(`Supabase: ${error.message}`);

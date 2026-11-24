@@ -18,6 +18,7 @@ export async function POST(req: Request) {
       price: part.price,
       freight: part.freight,
       mcintyreMade: part.mcintyreMade,
+      maxQty: part.stock.status === 'in' ? part.stock.maxQty : undefined,
       images: part.images[0] ? [part.images[0].thumb, part.images[0].original] : [],
       reason,
     })),

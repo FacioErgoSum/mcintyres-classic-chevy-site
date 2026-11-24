@@ -36,6 +36,7 @@ export async function POST(req: Request) {
     description?: string;
     meta: Record<string, string>;
     freight: boolean;
+    goldenStar?: boolean;
     group: 'part' | 'mailer' | 'printed';
   };
   const lines: Line[] = [];
@@ -68,6 +69,8 @@ export async function POST(req: Request) {
     }
     const part = await getPart(i.handle);
     if (!part) return NextResponse.json({ error: 'A part in your cart is no longer for sale. Remove it and try again.' }, { status: 400 });
+    if (part.stock.maxQty === 0) return NextResponse.json({ error: `${part.name} is out of stock right now. Remove it and try again.` }, { status: 409 });
+    if (i.qty > part.stock.maxQty) return NextResponse.json({ error: `We can only promise ${part.stock.maxQty} of ${part.name} right now. Lower the number and try again.` }, { status: 409 });
     lines.push({
       qty: i.qty,
       name: part.name,
@@ -78,16 +81,18 @@ export async function POST(req: Request) {
         kind: 'part',
         handle: part.handle,
         supplier: part.mcintyreMade ? 'mcintyre' : 'golden_star',
+        stock: part.stock.status === 'in' ? String(part.stock.qty) : part.stock.status,
         part_number: part.partNumber ?? '',
         freight: part.freight ? 'yes' : 'no',
       },
       freight: part.freight,
+      goldenStar: !part.mcintyreMade,
       group: 'part',
     });
   }
 
   const ship = shippingForOrder({
-    partsFreight: lines.filter((l) => l.group === 'part').map((l) => l.freight),
+    parts: lines.filter((l) => l.group === 'part').map((l) => ({ freight: l.freight, qty: l.qty, goldenStar: !!l.goldenStar })),
     mailerMerch: lines.filter((l) => l.group === 'mailer').length,
     printedMerch: lines.filter((l) => l.group === 'printed').length,
   });
@@ -112,7 +117,7 @@ export async function POST(req: Request) {
       })),
       shipping_address_collection: { allowed_countries: ['US'] },
       shipping_options: [
-        { shipping_rate_data: { display_name: ship.label, type: 'fixed_amount', fixed_amount: { amount: Math.round(ship.amount * 100), currency: 'usd' } } },
+        { shipping_rate_data: { display_name: ship.label.slice(0, 100), type: 'fixed_amount', fixed_amount: { amount: Math.round(ship.amount * 100), currency: 'usd' } } },
       ],
       phone_number_collection: { enabled: true }, // freight carriers call before delivery
       ...(process.env.STRIPE_TAX === 'on' ? { automatic_tax: { enabled: true } } : {}),
