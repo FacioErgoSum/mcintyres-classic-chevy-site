@@ -59,13 +59,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <div className="chrome-spear" aria-hidden />
         </header>
-        {/* Green bar like the lower paint color on a two-tone Bel Air: shop by year. */}
-        <nav aria-label="Shop by year" className="bg-brand">
-          <ul className="wrap flex justify-around sm:justify-center sm:gap-x-14 py-3 text-lg sm:text-xl font-bold">
+        {/* Green bar like the lower paint color on a two-tone Bel Air: shop by year, plus our own parts and merch. */}
+        <nav aria-label="Shop" className="bg-brand">
+          <ul className="wrap flex flex-wrap justify-center gap-x-5 gap-y-1 sm:gap-x-10 lg:gap-x-14 py-3 text-base sm:text-xl font-bold">
             <li><Link href="/planner?year=1955" className="nav-link" aria-label="1955 Chevy parts">’55</Link></li>
             <li><Link href="/planner?year=1956" className="nav-link" aria-label="1956 Chevy parts">’56</Link></li>
             <li><Link href="/planner?year=1957" className="nav-link" aria-label="1957 Chevy parts">’57</Link></li>
             <li><Link href="/other" className="nav-link">Non Tri-Five</Link></li>
+            <li><Link href="/mcintyre-made" className="nav-link">McIntyre Made</Link></li>
+            <li><Link href="/merch" className="nav-link">Merch</Link></li>
           </ul>
         </nav>
         <main id="main" className="wrap py-5 sm:py-8">{children}</main>
