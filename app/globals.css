@@ -2,6 +2,14 @@
 @import '@fontsource/atkinson-hyperlegible/700.css';
 @import '@fontsource/yellowtail/400.css';
 
+/* Raceway by Zavier Cabarga (licensed font). Put the webfont files in public/fonts/
+   as raceway.woff2 and/or raceway.woff. Until they're there, titles fall back to Yellowtail. */
+@font-face {
+  font-family: 'Raceway';
+  src: url('/fonts/raceway.woff2') format('woff2'), url('/fonts/raceway.woff') format('woff');
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -47,8 +55,8 @@
   .label { @apply block text-lg font-bold mb-2; }
   .wrap { @apply mx-auto w-full max-w-3xl px-4; }
 
-  /* Section titles in the Yellowtail script, like a dealer's showroom sign. */
-  .script-title { @apply font-script font-normal text-brand text-[2rem] sm:text-[2.5rem] leading-none; }
+  /* Section titles ("Shop by Category") in Raceway, like a dealer's showroom sign. */
+  .script-title { @apply font-normal text-brand text-[2rem] sm:text-[2.5rem] leading-none; font-family: 'Raceway', var(--font-script), cursive; }
 }
 
 /* Chrome side spear between the two paint colors, like a '55 Bel Air. */
