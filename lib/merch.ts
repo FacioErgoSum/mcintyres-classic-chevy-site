@@ -10,7 +10,12 @@ import { createClient } from '@supabase/supabase-js';
 // options: sizes or styles, e.g. [{ "label": "M", "printful_sync_variant_id": 4321 }]
 //   For Printful items every option needs its Printful "sync variant" id.
 
-export type MerchOption = { label: string; printful_sync_variant_id?: number | null; price?: number | null };
+export type MerchOption = {
+  label: string;
+  printful_sync_variant_id?: number | null;
+  price?: number | null;
+  color_hex?: string | null; // swatch color from Printful, e.g. "#2b2b2b"
+};
 export type MerchItem = {
   handle: string;
   name: string;

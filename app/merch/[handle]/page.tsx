@@ -39,7 +39,7 @@ export default async function MerchItemPage({ params }: P) {
         price={m.price}
         images={m.images.slice(0, 1)}
         kind={m.fulfillment}
-        options={m.options.map((o) => ({ label: o.label, price: o.price }))}
+        options={m.options.map((o) => ({ label: o.label, price: o.price, color_hex: o.color_hex }))}
       />
       {m.description && (
         <section className="space-y-3">
