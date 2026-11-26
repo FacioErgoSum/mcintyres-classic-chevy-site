@@ -17,11 +17,11 @@ export default {
         script: ['var(--font-script)', 'cursive'],
       },
       fontSize: {
-        base: ['1.25rem', { lineHeight: '1.65' }], // 20px body for older eyes
-        lg: ['1.4rem', { lineHeight: '1.5' }],
-        xl: ['1.65rem', { lineHeight: '1.35' }],
-        '2xl': ['2rem', { lineHeight: '1.2' }],
-        '3xl': ['2.6rem', { lineHeight: '1.12' }],
+        base: ['1.0625rem', { lineHeight: '1.6' }], // 17px body: still roomy, fits more on a phone
+        lg: ['1.1875rem', { lineHeight: '1.5' }],
+        xl: ['1.375rem', { lineHeight: '1.35' }],
+        '2xl': ['1.625rem', { lineHeight: '1.25' }],
+        '3xl': ['2rem', { lineHeight: '1.15' }],
       },
     },
   },

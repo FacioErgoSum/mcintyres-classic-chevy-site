@@ -14,9 +14,9 @@
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
   body { @apply bg-white text-onyx text-base antialiased; }
-  h1 { @apply text-3xl font-bold; }
-  h2 { @apply text-2xl font-bold; }
-  h3 { @apply text-xl font-bold; }
+  h1 { @apply text-2xl sm:text-3xl font-bold; }
+  h2 { @apply text-xl sm:text-2xl font-bold; }
+  h3 { @apply text-lg sm:text-xl font-bold; }
   a { @apply text-brand-dark underline underline-offset-4 decoration-2; }
   a:hover { @apply text-onyx; }
   :focus-visible { outline: 4px solid #E8A317; outline-offset: 3px; border-radius: 6px; }
@@ -29,7 +29,7 @@
 @layer components {
   /* Every button is at least thumb-sized. */
   .btn {
-    @apply inline-flex items-center justify-center gap-3 rounded-xl px-6 py-4 text-lg font-bold no-underline min-h-[64px] w-full sm:w-auto;
+    @apply inline-flex items-center justify-center gap-3 rounded-xl px-5 py-3 text-lg font-bold no-underline min-h-[52px] w-full sm:w-auto;
   }
   .btn-buy { @apply btn bg-matador text-white hover:bg-matador-dark hover:text-white; }
   .btn-main { @apply btn bg-brand text-white hover:bg-brand-dark hover:text-white; }
@@ -37,15 +37,18 @@
 
   /* Big choice tiles for the Project Planner */
   .choice {
-    @apply block w-full rounded-xl border-[3px] border-brand bg-white px-5 py-5 text-left no-underline text-onyx min-h-[72px];
+    @apply block w-full rounded-xl border-[3px] border-brand bg-white px-4 py-4 text-left no-underline text-onyx min-h-[60px];
   }
   .choice:hover { @apply bg-brand-light text-onyx; }
   .choice-title { @apply block text-xl font-bold; }
   .choice-note { @apply block text-base text-onyx/75 mt-1; }
 
-  .field { @apply block w-full rounded-lg border-[3px] border-onyx/60 bg-white px-4 py-3 min-h-[60px]; }
+  .field { @apply block w-full rounded-lg border-[3px] border-onyx/60 bg-white px-4 py-2.5 min-h-[52px]; }
   .label { @apply block text-lg font-bold mb-2; }
   .wrap { @apply mx-auto w-full max-w-3xl px-4; }
+
+  /* Section titles in the Yellowtail script, like a dealer's showroom sign. */
+  .script-title { @apply font-script font-normal text-brand text-[2rem] sm:text-[2.5rem] leading-none; }
 }
 
 /* Chrome side spear between the two paint colors, like a '55 Bel Air. */
@@ -66,6 +69,9 @@
 }
 
 /* "CLASSIC CHEVY" under the logo: white capitals with a black outline, like the script. */
+.nav-link { color: #fff; text-decoration: none; }
+.nav-link:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+
 .outline-caps {
   font-family: var(--font-body), system-ui, sans-serif;
   font-weight: 700;

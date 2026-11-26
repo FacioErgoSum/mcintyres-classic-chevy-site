@@ -4,10 +4,6 @@ import './globals.css';
 import CartLink from '@/components/CartLink';
 import AccountLink from '@/components/AccountLink';
 
-// Header logo: 'wordmark' (script only, reads best on the green bar) or 'logo' (script + Clover).
-// The Clover is the favicon and phone home-screen icon (app/icon.png, app/apple-icon.png, app/favicon.ico).
-const LOGO: 'logo' | 'wordmark' = 'wordmark';
-
 export const metadata: Metadata = {
   title: { default: 'McIntyre’s Classic Chevy — 1955, 1956 and 1957 Chevrolet parts', template: '%s — McIntyre’s Classic Chevy' },
   description: 'Sheet metal and parts for 1955, 1956 and 1957 Chevrolets, picked by a family that has been restoring Tri-Fives for over 50 years.',
@@ -22,60 +18,68 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:block focus:p-4">Skip to the page</a>
         <header>
-          <div className="bg-brand">
-            <div className="wrap flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-4 gap-y-3 py-3">
-              <Link href="/" className="no-underline flex flex-col items-start shrink-0" aria-label="McIntyre’s Classic Chevy, home">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/brand/${LOGO}-600.webp`}
-                  srcSet={`/brand/${LOGO}-300.webp 300w, /brand/${LOGO}-600.webp 600w, /brand/${LOGO}-900.webp 900w`}
-                  sizes="(min-width: 640px) 280px, 210px"
-                  alt="McIntyre’s"
-                  width={LOGO === 'logo' ? 900 : 900}
-                  height={LOGO === 'logo' ? 304 : 269}
-                  className="h-[64px] sm:h-[84px] w-auto"
-                />
-                <span className="outline-caps -mt-1 ml-[18%] text-[1.15rem] sm:text-[1.4rem]">Classic Chevy</span>
-              </Link>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <form action="/parts" method="get" role="search" className="relative flex-1 sm:w-64 sm:flex-none">
-                  <label htmlFor="site-search" className="sr-only">Search parts</label>
-                  <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-onyx/50">
-                    <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
-                  </svg>
-                  <input
-                    id="site-search"
-                    name="q"
-                    type="search"
-                    placeholder="Search parts"
-                    autoComplete="off"
-                    enterKeyHint="search"
-                    className="w-full h-[52px] rounded-xl border-[3px] border-onyx bg-white pl-11 pr-3 text-lg text-onyx placeholder:text-onyx/55"
-                  />
-                  <button type="submit" className="sr-only">Search</button>
-                </form>
-                <CartLink />
+          <div className="bg-white">
+            {/* Phones: account | logo (centered) | cart, then search full width. Wider screens: one row. */}
+            <div className="wrap grid grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-2 py-2 sm:flex sm:gap-x-4 sm:py-3">
+              <div className="col-start-1 row-start-1 justify-self-start sm:order-3 sm:ml-0">
                 <AccountLink />
               </div>
+              <Link href="/" className="col-start-2 row-start-1 no-underline shrink-0 sm:order-1" aria-label="McIntyre’s Classic Chevy, home">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/mcintyres-logo-600.webp"
+                  srcSet="/brand/mcintyres-logo-300.webp 300w, /brand/mcintyres-logo-600.webp 600w, /brand/mcintyres-logo-900.webp 900w"
+                  sizes="(min-width: 640px) 200px, 170px"
+                  alt="McIntyre’s Classic and Late Model Restoration Parts"
+                  width={900}
+                  height={375}
+                  className="h-[70px] sm:h-[84px] w-auto"
+                />
+              </Link>
+              <div className="col-start-3 row-start-1 justify-self-end sm:order-4">
+                <CartLink />
+              </div>
+              <form action="/parts" method="get" role="search" className="col-span-3 row-start-2 relative w-full sm:order-2 sm:flex-1 sm:max-w-md sm:ml-auto">
+                <label htmlFor="site-search" className="sr-only">Search parts</label>
+                <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-onyx/50">
+                  <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+                </svg>
+                <input
+                  id="site-search"
+                  name="q"
+                  type="search"
+                  placeholder="Search ’55–’57 Chevy parts"
+                  autoComplete="off"
+                  enterKeyHint="search"
+                  className="w-full h-[46px] sm:h-[50px] rounded-xl border-[3px] border-onyx bg-white pl-10 pr-3 text-base sm:text-lg text-onyx placeholder:text-onyx/55"
+                />
+                <button type="submit" className="sr-only">Search</button>
+              </form>
             </div>
           </div>
           <div className="chrome-spear" aria-hidden />
         </header>
-        <nav aria-label="Main" className="border-b-[3px] border-onyx/10">
-          <ul className="wrap flex flex-wrap gap-x-6 gap-y-2 py-3 text-lg font-bold">
-            <li><Link href="/planner">Find parts for my car</Link></li>
-            <li><Link href="/mcintyre-made">McIntyre Made</Link></li>
-            <li><Link href="/merch">Merch</Link></li>
-            <li><Link href="/ask">Ask a question</Link></li>
-            <li><Link href="/about">About us</Link></li>
-            <li><Link href="/other" className="font-normal">Non Tri-Five parts</Link></li>
+        {/* Green bar like the lower paint color on a two-tone Bel Air: shop by year. */}
+        <nav aria-label="Shop by year" className="bg-brand">
+          <ul className="wrap flex justify-around sm:justify-center sm:gap-x-14 py-3 text-lg sm:text-xl font-bold">
+            <li><Link href="/planner?year=1955" className="nav-link" aria-label="1955 Chevy parts">’55</Link></li>
+            <li><Link href="/planner?year=1956" className="nav-link" aria-label="1956 Chevy parts">’56</Link></li>
+            <li><Link href="/planner?year=1957" className="nav-link" aria-label="1957 Chevy parts">’57</Link></li>
+            <li><Link href="/other" className="nav-link">Non Tri-Five</Link></li>
           </ul>
         </nav>
-        <main id="main" className="wrap py-8">{children}</main>
+        <main id="main" className="wrap py-5 sm:py-8">{children}</main>
         <footer className="mt-12 bg-brand-dark text-white">
-          <div className="wrap py-10 space-y-4 text-lg">
-            <p className="font-bold text-xl">McIntyre’s Classic Chevy</p>
+          <div className="wrap py-10 space-y-4">
+            <p className="font-script text-3xl leading-none">McIntyre’s Classic Chevy</p>
             <p>Parts for ’55, ’56 and ’57 Chevrolets. Family owned in Scranton, Kansas.</p>
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 font-bold" aria-label="More from McIntyre’s">
+              <li><Link href="/planner" className="text-white">Find parts for my car</Link></li>
+              <li><Link href="/mcintyre-made" className="text-white">McIntyre Made</Link></li>
+              <li><Link href="/merch" className="text-white">Merch</Link></li>
+              <li><Link href="/ask" className="text-white">Ask a question</Link></li>
+              <li><Link href="/about" className="text-white">About us</Link></li>
+            </ul>
             <p>
               Questions? <Link href="/ask" className="text-white">Send us a message and photos</Link> and we’ll write back.
               You can also email <a href="mailto:g3chevyparts@gmail.com" className="text-white">g3chevyparts@gmail.com</a> or
@@ -93,8 +97,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </a>
               </li>
             </ul>
-            <p className="text-base"><Link href="/privacy" className="text-white">Privacy policy</Link></p>
-            <p className="text-base text-white/70">Chevrolet, Bel Air and Nomad are trademarks of General Motors. McIntyre’s is not affiliated with GM.</p>
+            <p className="text-sm"><Link href="/privacy" className="text-white">Privacy policy</Link></p>
+            <p className="text-sm text-white/70">Chevrolet, Bel Air and Nomad are trademarks of General Motors. McIntyre’s is not affiliated with GM.</p>
           </div>
         </footer>
       </body>
