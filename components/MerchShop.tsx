@@ -1,0 +1,29 @@
+'use client';
+import { useState } from 'react';
+import Gallery from './Gallery';
+import MerchBuy, { colorsOf, colorSlug, photosForColor } from './MerchBuy';
+
+type Props = React.ComponentProps<typeof MerchBuy> & {
+  /** Shown between the photos and the color/size pickers (price, shipping). */
+  children?: React.ReactNode;
+};
+
+// Photos + buy box for one merch item. Clicking a color swaps the photos to that
+// color's (files named like /merch/<item>/<color>-front.webp).
+export default function MerchShop({ children, ...buy }: Props) {
+  const colors = colorsOf(buy.options);
+  const [color, setColor] = useState<string | null>(colors.length === 1 ? colors[0] : null);
+
+  // Before a color is picked, show the color of the main photo.
+  const firstFile = buy.images[0]?.split('/').pop() || '';
+  const shown = color ?? colors.find((c) => firstFile.startsWith(colorSlug(c) + '-')) ?? null;
+  const photos = photosForColor(buy.images, shown).map((u) => ({ thumb: u, large: u, original: u }));
+
+  return (
+    <>
+      <Gallery key={shown ?? 'all'} photos={photos} name={buy.name} />
+      {children}
+      <MerchBuy {...buy} color={color} onColorChange={setColor} />
+    </>
+  );
+}

@@ -14,15 +14,35 @@ type Props = {
   images: string[];
   kind: 'mailer' | 'printed';
   options: Option[];
+  /** Controlled color (so the photos can follow it); leave out to manage it here. */
+  color?: string | null;
+  onColorChange?: (color: string) => void;
 };
 
 // Printful's garment-dyed colors start with "G. Dyed"; shoppers don't need that.
-const pretty = (c: string) => c.replace(/^G\.\s*Dyed\s+/i, '').trim();
+export const pretty = (c: string) => c.replace(/^G\.\s*Dyed\s+/i, '').trim();
+
+/** "G. Dyed Black Rock" → "black-rock", used to match photos like /merch/x/black-rock-front.webp */
+export const colorSlug = (c: string) => pretty(c).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const fileName = (u: string) => u.split('/').pop() || '';
+export const photosForColor = (images: string[], color: string | null) => {
+  if (!color) return images;
+  const hit = images.filter((u) => fileName(u).startsWith(colorSlug(color) + '-'));
+  return hit.length ? hit : images;
+};
+
+/** "Color / Size" option labels → the list of colors, in order. */
+export const colorsOf = (options: { label: string }[]) =>
+  options.length > 1 && options.every((o) => o.label.includes(' / '))
+    ? [...new Set(options.map((o) => o.label.slice(0, o.label.lastIndexOf(' / '))))]
+    : [];
 
 // Used until the merch sync has saved Printful's own color codes.
+// (Garment-dyed colors sampled from the Resurrection tee mockups.)
 const FALLBACK_HEX: Record<string, string> = {
-  black: '#1f1f1f', 'black rock': '#2a2a2a', anthracite: '#4a4a4a', 'deep teal': '#4a5d74',
-  'green bay': '#6f8a7d', 'kaffa coffee': '#7a5a4a', white: '#ffffff', navy: '#22304a',
+  black: '#1f1f1f', white: '#ffffff', navy: '#22304a',
+  'black rock': '#2b2a28', anthracite: '#444241', 'deep teal': '#495562', 'green bay': '#5d726d',
+  'kaffa coffee': '#8b6761', 'misty grey': '#898d89', stone: '#bbb49d',
 };
 const hexFor = (color: string, given?: string | null) =>
   given || FALLBACK_HEX[pretty(color).toLowerCase()] || '#b8b2a7';
@@ -34,7 +54,7 @@ const sizeRank = (s: string) => {
 };
 const sizeLike = (l: string) => /^(XXS|XS|S|M|L|XL|\dXL|One size|\d+(\.\d+)?″?["x×]?.*)$/i.test(l.trim());
 
-export default function MerchBuy({ handle, name, price, images, kind, options }: Props) {
+export default function MerchBuy({ handle, name, price, images, kind, options, color: colorProp, onColorChange }: Props) {
   // Split "Color / Size" labels into two pickers.
   const split = options.length > 1 && options.every((o) => o.label.includes(' / '));
   const parsed = useMemo(
@@ -57,7 +77,10 @@ export default function MerchBuy({ handle, name, price, images, kind, options }:
   );
 
   const onlyColor = !split && options.length > 1 && !options.every((o) => sizeLike(o.label));
-  const [color, setColor] = useState<string | null>(colors.length === 1 ? colors[0].color : null);
+  const [colorState, setColorState] = useState<string | null>(colors.length === 1 ? colors[0].color : null);
+  const controlled = onColorChange !== undefined;
+  const color = controlled ? colorProp ?? null : colorState;
+  const setColor = (c: string) => (controlled ? onColorChange!(c) : setColorState(c));
   const [size, setSize] = useState<string | null>(options.length === 1 ? options[0].label : sizes.length === 1 && split ? sizes[0] : null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -88,7 +111,7 @@ export default function MerchBuy({ handle, name, price, images, kind, options }:
         handle: `merch:${handle}:${label}`,
         name: label && options.length > 1 ? `${name} (${shown})` : name,
         price: unitPrice,
-        images,
+        images: photosForColor(images, color).slice(0, 1),
         freight: false,
         href: `/merch/${handle}`,
         kind,
