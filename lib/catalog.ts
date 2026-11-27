@@ -303,7 +303,7 @@ const wordsOf = (q?: string) => (q || '').toLowerCase().split(/\s+/).map((w) => 
 export function normalizeSearchText(text: string): string {
   return text
     .toLowerCase()
-    .replace(/\b(tail|head|back\s*up|parking|dome|dash|courtesy|marker)\s*(?:lights?|lamps?)\b/g, (_, a: string) => `${a.replace(/\s+/g, '')}light`)
+    .replace(/\b(tail|head|back\s*up|parking|dome|dash|courtesy|marker)\s*(?:lights?|lamps?|lites?)\b/g, (_, a: string) => `${a.replace(/\s+/g, '')}light`)
     .replace(/\btailight/g, 'taillight')
     .replace(/\bfloorpan/g, 'floor pan')
     .replace(/\btrunkpan/g, 'trunk pan')
@@ -398,6 +398,71 @@ function searchScore(p: Part, words: string[]): number {
   const small = SMALL_BITS.exec(p.title);
   if (small && !words.some((w) => small[0].toLowerCase().startsWith(w))) score -= 30;
   return score;
+}
+
+// ---------- Did you mean: fixing small typos in a search ----------
+
+// Every word in the catalog's titles, with how often it appears (common words win ties).
+let vocab: { from: Part[]; words: Map<string, number> } | null = null;
+function vocabulary(parts: Part[]): Map<string, number> {
+  if (vocab?.from === parts) return vocab.words;
+  const words = new Map<string, number>();
+  for (const p of parts) {
+    for (const w of normalizeSearchText(`${p.name} ${p.title}`).split(/[^a-z]+/)) {
+      if (w.length >= 3) words.set(w, (words.get(w) || 0) + 1);
+    }
+  }
+  for (const w of Object.keys(SYNONYMS)) words.set(w, words.get(w) || 1);
+  vocab = { from: parts, words };
+  return words;
+}
+
+// Letters changed, added, dropped or swapped ("qaurter" → "quarter" is 1).
+function typoDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let rowMin = Infinity;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      rowMin = Math.min(rowMin, d[i][j]);
+    }
+    if (rowMin > max) return max + 1;
+  }
+  return d[a.length][b.length];
+}
+
+/**
+ * A corrected search when a word looks like a typo ("headight" → "headlight"), or null.
+ * Only words the catalog doesn't contain are changed; numbers and part numbers never are.
+ */
+export async function suggestSearch(q: string): Promise<string | null> {
+  const words = vocabulary(await allParts());
+  const known = [...words.keys()];
+  let changed = false;
+  const out = normalizeSearchText(q)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => {
+      const w = token.replace(/[^a-z]/g, '');
+      if (w.length < 4 || /\d/.test(token) || SOFT.has(w) || words.has(w) || words.has(singular(w))) return token;
+      if (known.some((k) => k.includes(w))) return token; // part of a word, e.g. "bump"
+      const max = w.length <= 5 ? 1 : 2;
+      let best: { word: string; dist: number; count: number } | null = null;
+      for (const k of known) {
+        const dist = typoDistance(w, k, max);
+        if (dist > max) continue;
+        const count = words.get(k)!;
+        if (!best || dist < best.dist || (dist === best.dist && count > best.count)) best = { word: k, dist, count };
+      }
+      if (!best) return token;
+      changed = true;
+      return best.word;
+    });
+  return changed ? out.join(' ') : null;
 }
 
 /** Tri-Five parts matching the planner or a search, best match first. */

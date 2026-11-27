@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { findOtherParts, findParts } from '@/lib/catalog';
+import { findOtherParts, findParts, suggestSearch } from '@/lib/catalog';
 import { BODIES } from '@/lib/fitment';
 import { areaName } from '@/lib/areas';
 import PartRow from '@/components/PartRow';
@@ -9,12 +9,24 @@ import { RememberList } from '@/components/BackLink';
 export const metadata: Metadata = { title: 'Parts' };
 
 const PAGE = 30;
-type SP = Promise<{ q?: string; year?: string; body?: string; area?: string; show?: string }>;
+type SP = Promise<{ q?: string; year?: string; body?: string; area?: string; show?: string; exact?: string }>;
 
 export default async function PartsPage({ searchParams }: { searchParams: SP }) {
-  const { q, year, body, area, show } = await searchParams;
+  const { q: typed, year, body, area, show, exact } = await searchParams;
   const yearNum = year ? Number(year) : undefined;
-  const parts = await findParts({ q, year: yearNum, body, area });
+  let q = typed;
+  let parts = await findParts({ q, year: yearNum, body, area });
+  // Nothing found: try fixing a typo ("headight" → "headlight") and show those instead.
+  let corrected: string | null = null;
+  if (typed && !parts.length && !exact) {
+    const suggestion = await suggestSearch(typed);
+    const fixed = suggestion ? await findParts({ q: suggestion, year: yearNum, body, area }) : [];
+    if (fixed.length) {
+      corrected = suggestion;
+      q = suggestion!;
+      parts = fixed;
+    }
+  }
   const limit = Math.max(PAGE, Number(show) || PAGE);
   const shown = parts.slice(0, limit);
   const others = q ? (await findOtherParts({ q, limit: 1 }).catch(() => ({ total: 0 }))).total : 0;
@@ -30,6 +42,12 @@ export default async function PartsPage({ searchParams }: { searchParams: SP }) 
     <div className="space-y-6">
       <RememberList />
       <h1>{heading}</h1>
+      {corrected && (
+        <p className="text-lg rounded-lg bg-ivory p-4">
+          No parts match “{typed}”. Showing results for <strong>{corrected}</strong>.{' '}
+          <Link href={keep({ q: typed!, exact: '1' })}>Search for “{typed}” instead</Link>
+        </p>
+      )}
       {car && (
         <p className="text-xl">
           For your <strong>{car}</strong> Chevy. <Link href="/planner">Start over with a different car</Link>
