@@ -139,6 +139,21 @@ function shopifySized(url: string, width: number) {
   return url + (url.includes('?') ? '&' : '?') + `width=${width}`;
 }
 
+/**
+ * The picture Facebook, texts and other sites show when someone shares a part's link.
+ * They show JPEGs most reliably, so use Golden Star's original JPEG (resized by Shopify)
+ * when there is one, and the large WebP copy otherwise.
+ */
+export function shareImage(p: Part): string | undefined {
+  const photo = p.images[0];
+  if (!photo) return undefined;
+  if (/cdn\.shopify\.com/.test(photo.original)) return shopifySized(photo.original, 1200);
+  if (/\.(jpe?g|png)(\?|$)/i.test(photo.original)) return photo.original;
+  // our own photos kept with the site: a JPEG copy is made at build time (scripts/merch-thumbs.mjs)
+  if (/^\/photos\/parts\/.*-large\.webp$/i.test(photo.original)) return photo.original.replace(/-large\.webp$/i, '-share.jpg');
+  return photo.large;
+}
+
 function toPart(r: Row): Part | null {
   if (r.retail_price == null || r.retail_price <= 0) return null;
   const images: Photo[] = [...(r.product_images || [])]

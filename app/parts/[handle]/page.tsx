@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getPart, money } from '@/lib/catalog';
+import { getPart, money, shareImage } from '@/lib/catalog';
 import { describeFitment } from '@/lib/fitment';
 import { lineName } from '@/lib/lines';
 import { EXTRA_PART_USD, FREIGHT_USD, GS_PACKING_FEE_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
@@ -9,6 +9,8 @@ import AddToCart from '@/components/AddToCart';
 import Gallery from '@/components/Gallery';
 import SaveToList from '@/components/account/SaveToList';
 import BackLink from '@/components/BackLink';
+import ShareButtons from '@/components/ShareButtons';
+import { siteUrl } from '@/lib/site';
 
 export const revalidate = 600;
 type P = Promise<{ handle: string }>;
@@ -18,11 +20,13 @@ export async function generateMetadata({ params }: { params: P }): Promise<Metad
   if (!part) return {};
   const title = part.mcintyreMade ? part.name : part.title;
   const description = (part.description || part.name).slice(0, 160);
+  const image = shareImage(part);
   return {
     title,
     description,
     alternates: { canonical: `/parts/${part.handle}` },
-    openGraph: { title, description, url: `/parts/${part.handle}`, ...(part.images[0] ? { images: [part.images[0].large] } : {}) },
+    openGraph: { type: 'website', title, description, url: `/parts/${part.handle}`, ...(image ? { images: [{ url: image, alt: part.name }] } : {}) },
+    twitter: { card: 'summary_large_image', title, description, ...(image ? { images: [image] } : {}) },
   };
 }
 
@@ -87,6 +91,8 @@ export default async function PartPage({ params }: { params: P }) {
       )}
 
       <SaveToList handle={part.handle} fitment={part.triFive ? part.fitment : undefined} />
+
+      <ShareButtons url={`${siteUrl()}/parts/${part.handle}`} title={part.name} />
 
       <section className="space-y-3 rounded-xl border-[3px] border-brand p-5">
         <h2 className="text-xl">Fits</h2>

@@ -5,6 +5,8 @@ import { getMerch } from '@/lib/merch';
 import { money } from '@/lib/catalog';
 import { MERCH_MAILER_USD, PRINTFUL_SHIPPING_USD } from '@/lib/shipping';
 import MerchShop from '@/components/MerchShop';
+import ShareButtons from '@/components/ShareButtons';
+import { siteUrl } from '@/lib/site';
 
 export const revalidate = 600;
 
@@ -12,7 +14,18 @@ type P = { params: Promise<{ handle: string }> };
 
 export async function generateMetadata({ params }: P): Promise<Metadata> {
   const m = await getMerch((await params).handle);
-  return m ? { title: m.name, description: m.description.slice(0, 160) } : {};
+  if (!m) return {};
+  const description = m.description.slice(0, 160) || `${m.name} from McIntyre’s Classic Chevy.`;
+  // Our own photos get a JPEG copy at build time (scripts/merch-thumbs.mjs) for link previews.
+  const photo = m.images[0];
+  const image = photo ? (photo.startsWith('/merch/') ? photo.replace(/\.(webp|png|jpe?g)$/i, '-share.jpg') : photo) : undefined;
+  return {
+    title: m.name,
+    description,
+    alternates: { canonical: `/merch/${m.handle}` },
+    openGraph: { type: 'website', title: m.name, description, url: `/merch/${m.handle}`, ...(image ? { images: [{ url: image, alt: m.name }] } : {}) },
+    twitter: { card: 'summary_large_image', title: m.name, description, ...(image ? { images: [image] } : {}) },
+  };
 }
 
 export default async function MerchItemPage({ params }: P) {
@@ -45,6 +58,7 @@ export default async function MerchItemPage({ params }: P) {
           <p className="max-w-[65ch]">{m.description}</p>
         </section>
       )}
+      <ShareButtons url={`${siteUrl()}/merch/${m.handle}`} title={m.name} what="item" />
     </div>
   );
 }

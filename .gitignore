@@ -7,3 +7,5 @@ node_modules/
 *.tsbuildinfo
 public/planner/fit/
 public/merch/**/*-thumb.webp
+public/merch/**/*-share.jpg
+public/photos/parts/*-share.jpg
