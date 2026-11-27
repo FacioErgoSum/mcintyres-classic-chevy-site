@@ -4,6 +4,7 @@ import { findOtherParts, findParts } from '@/lib/catalog';
 import { BODIES } from '@/lib/fitment';
 import { areaName } from '@/lib/areas';
 import PartRow from '@/components/PartRow';
+import { RememberList } from '@/components/BackLink';
 
 export const metadata: Metadata = { title: 'Parts' };
 
@@ -27,6 +28,7 @@ export default async function PartsPage({ searchParams }: { searchParams: SP }) 
 
   return (
     <div className="space-y-6">
+      <RememberList />
       <h1>{heading}</h1>
       {car && (
         <p className="text-xl">

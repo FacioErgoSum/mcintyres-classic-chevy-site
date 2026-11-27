@@ -8,7 +8,7 @@ export default {
       colors: {
         brand: { DEFAULT: '#1D582E', light: '#DDECE1', dark: '#123B1E' }, // McIntyre's green
         ivory: '#F6F1E1', // India Ivory, used only for the two-tone band
-        matador: { DEFAULT: '#A81E2A', dark: '#861620' }, // Matador Red, buy buttons only
+        matador: { DEFAULT: '#A81E2A', dark: '#861620' }, // Matador Red, McIntyre Made badges
         onyx: '#1D1F22', // Onyx Black, body text
         chrome: '#8B9399',
       },

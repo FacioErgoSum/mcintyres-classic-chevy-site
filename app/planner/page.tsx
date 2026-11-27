@@ -33,6 +33,12 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 export default async function Planner({ searchParams }: { searchParams: SP }) {
   const { year, body, area } = await searchParams;
 
+  // Only ’55, ’56 and ’57 (or “any”), and only body styles and areas we know.
+  // Anything else from an old link or a typo goes back a step instead of a dead end.
+  if (year && year !== 'any' && !(YEARS as readonly number[]).includes(Number(year))) redirect('/planner');
+  if (body && body !== 'any' && (!BODIES.some((b) => b.id === body) || (body === '4-door-hardtop' && year === '1955'))) redirect(qs({ year }));
+  if (area && area !== 'all' && !AREAS.some((a) => a.id === area)) redirect(qs({ year, body }));
+
   if (!year) {
     if (YEARS.some((y) => art(`year-${y}`))) {
       return (
@@ -114,7 +120,7 @@ export default async function Planner({ searchParams }: { searchParams: SP }) {
           <p className="text-xl">Your car: <strong>{yearText} {bodyName}</strong>. <Link href={qs({ year })}>Change</Link></p>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             {shown.map(({ a, n }) => (
-              <li key={a.id}><ChoiceTile href={qs({ year, body, area: a.id })} title={a.name} note={`${n} ${n === 1 ? 'part' : 'parts'}`} art={art(`area-${a.id}`)} shape="part" /></li>
+              <li key={a.id}><ChoiceTile href={qs({ year, body, area: a.id })} title={a.name} note={`${n} ${n === 1 ? 'part' : 'parts'}`} art={art(`area-${a.id}`) ?? fitting.find((p) => p.areas.includes(a.id) && p.images[0])?.images[0].large} shape="part" /></li>
             ))}
           </ul>
           <p className="max-w-lg"><Link className="choice" href={qs({ year, body, area: 'all' })}><span className="choice-title">Show me everything</span><span className="choice-note">All {fitting.length} parts that fit this car</span></Link></p>

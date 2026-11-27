@@ -49,15 +49,6 @@ export const SLIDES: Slide[] = [
     text: 'Repair panels made in the USA.',
     button: 'See our parts',
   },
-  {
-    image: '/slides/redconvertible.jpeg',
-    imageLarge: '/slides/redconvertible.jpeg',
-    alt: '1957 Chevy driving with a cornucopia in the trunk',
-    href: '/planner',
-    title: 'Thankful for Savings',
-    text: 'Black Friday savings across the entire store!',
-    button: 'Check out the deals',
-  },
 ];
 
 /** Slides showing today (start/end dates are checked in US Central time). */

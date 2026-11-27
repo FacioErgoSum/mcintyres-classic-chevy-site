@@ -109,10 +109,22 @@ export default function CartPage() {
       {process.env.NEXT_PUBLIC_STRIPE_TAX === 'on' && <p className="text-lg text-onyx/80">Sales tax is added at checkout.</p>}
 
       {error && <p role="alert" className="rounded-lg bg-matador/10 border-[3px] border-matador p-4 text-lg">{error}</p>}
+      {(outOfStock.length > 0 || overLimit.length > 0) && (
+        <div role="alert" className="rounded-lg bg-matador/10 border-[3px] border-matador p-4 text-lg space-y-1">
+          <p className="font-bold">Before you can check out:</p>
+          <ul className="list-disc pl-6">
+            {outOfStock.map((l) => <li key={l.handle}>Remove <strong>{l.name}</strong>. It sold out.</li>)}
+            {overLimit.map((l) => <li key={l.handle}>Lower <strong>{l.name}</strong> to {l.maxQty} or fewer.</li>)}
+          </ul>
+        </div>
+      )}
       <button type="button" className="btn-buy text-xl sm:min-w-[18rem]" disabled={busy || outOfStock.length > 0 || overLimit.length > 0} onClick={checkout}>
         {busy ? 'Opening secure checkout…' : 'Check out'}
       </button>
       <p className="text-lg">You’ll pay on a secure Stripe page. We order your parts as soon as payment goes through.</p>
+      <p className="text-lg">
+        Freight orders: please check every box before you sign for it. <Link href="/shipping-returns">Shipping and returns</Link>
+      </p>
     </div>
   );
 }

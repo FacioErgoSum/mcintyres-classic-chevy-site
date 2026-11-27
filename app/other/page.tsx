@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { findOtherParts } from '@/lib/catalog';
 import { OTHER_LINES, lineName } from '@/lib/lines';
 import PartRow from '@/components/PartRow';
+import { RememberList } from '@/components/BackLink';
 
 export const metadata: Metadata = { title: 'Non Tri-Five parts' };
 
@@ -22,6 +23,7 @@ export default async function OtherParts({ searchParams }: { searchParams: SP })
 
   return (
     <div className="space-y-6">
+      <RememberList />
       <h1>{validLine ? lineName(validLine) : 'Non Tri-Five parts'}</h1>
       <p className="max-w-[60ch]">
         We specialize in ’55–’57 Chevrolets, but we can also order sheet metal and parts for these cars.

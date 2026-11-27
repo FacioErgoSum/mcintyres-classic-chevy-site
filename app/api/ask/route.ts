@@ -13,6 +13,30 @@ export async function POST(req: Request) {
 
   const form = await req.formData();
   const text = (k: string, max: number) => String(form.get(k) ?? '').trim().slice(0, max);
+
+  // Spam traps. A bot that fills the hidden field, or sends the form within a few
+  // seconds of loading it, is told it worked and nothing is saved or emailed.
+  const started = Number(text('started', 20));
+  if (text('website', 200) || (started && Date.now() - started < 3000)) {
+    console.warn('Ask form: spam trap caught a message; not saved.');
+    return NextResponse.json({ ok: true });
+  }
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  if (turnstileSecret) {
+    const check = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: new URLSearchParams({
+        secret: turnstileSecret,
+        response: text('cf-turnstile-response', 4096),
+        remoteip: req.headers.get('x-nf-client-connection-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '',
+      }),
+    })
+      .then((r) => r.json() as Promise<{ success?: boolean }>)
+      .catch(() => ({ success: false }));
+    if (!check.success) {
+      return NextResponse.json({ error: 'We couldn’t confirm you’re a person. Please wait for the check above the button to finish.' }, { status: 400 });
+    }
+  }
   const name = text('name', 120);
   const email = text('email', 200);
   const message = text('message', 5000);

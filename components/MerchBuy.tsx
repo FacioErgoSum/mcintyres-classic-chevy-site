@@ -105,7 +105,7 @@ export default function MerchBuy({ handle, name, price, images, kind, options, c
       if (!chosen) return setMissing('That size isn’t made in this color');
     }
     const label = chosen?.label ?? '';
-    const shown = split && chosen ? `${pretty(chosen.color!)} / ${chosen.size}` : label;
+    const shown = split && chosen ? `${pretty(chosen.color!)}, ${chosen.size}` : pretty(label);
     addToCart(
       {
         handle: `merch:${handle}:${label}`,

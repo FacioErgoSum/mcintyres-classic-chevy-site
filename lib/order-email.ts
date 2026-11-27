@@ -37,6 +37,7 @@ export function orderEmail(
   order: Order,
   gs: { url: string | null; missing: OrderLine[] },
   printful: { status: string; detail: string },
+  stockWarnings: string[] = [],
 ): { subject: string; html: string; text: string } {
   const a = order.shipTo.address;
   const addressLines = [order.shipTo.name, a.line1, a.line2, `${a.city}, ${a.state} ${a.zip}`].filter(Boolean) as string[];
@@ -45,10 +46,11 @@ export function orderEmail(
   const printed = order.lines.filter((l) => l.kind === 'printed');
   const freight = gsLines.some((l) => l.freight);
 
-  const subject = `${order.live ? '' : '[TEST] '}New order: ${order.shipTo.name || order.customer.name} – ${money(order.totals.total)}`;
+  const subject = `${order.live ? '' : '[TEST] '}${stockWarnings.length ? '[CHECK STOCK] ' : ''}New order: ${order.shipTo.name || order.customer.name} – ${money(order.totals.total)}`;
 
   let html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#1b1b1b;max-width:680px">
   ${order.live ? '' : '<p style="background:#fff3cd;padding:10px;border-radius:8px;font-size:16px"><b>Test order.</b> No real money was paid. Don’t order anything for this one.</p>'}
+  ${stockWarnings.length ? `<div style="background:#fde8e8;border:3px solid #a33;padding:12px 16px;border-radius:8px;font-size:16px"><b>Check stock first.</b><ul style="margin:8px 0 0;padding-left:20px">${stockWarnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>` : ''}
   <h1 style="font-size:26px;margin:0 0 4px">New order from ${esc(order.shipTo.name || order.customer.name)}</h1>
   <p style="font-size:16px;margin:0;color:#555">${order.created.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'full', timeStyle: 'short' })} (Central)</p>
 
@@ -112,6 +114,7 @@ export function orderEmail(
   const text = [
     `New order from ${order.shipTo.name}`,
     '',
+    ...(stockWarnings.length ? ['CHECK STOCK FIRST', ...stockWarnings, ''] : []),
     'SHIP TO',
     ...addressLines,
     `Phone: ${order.customer.phone || 'not given'}`,

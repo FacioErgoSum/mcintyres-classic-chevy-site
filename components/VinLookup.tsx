@@ -95,6 +95,7 @@ export default function VinLookup() {
             <Next
               year={result.year}
               body={pickBody || result.bodies[0]}
+              series={result.series === 'Sedan Delivery' ? undefined : result.series}
               nickname={nickname}
               setNickname={setNickname}
               busy={saving}
@@ -150,10 +151,12 @@ function Pick({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 }
 
 // After the car is known: save it to the account, or just search.
-function Next({ year, body, busy, onSave, nickname, setNickname }: { year: number; body: string; busy: boolean; onSave: () => void; nickname: string; setNickname: (s: string) => void }) {
+function Next({ year, body, series, busy, onSave, nickname, setNickname }: { year: number; body: string; series?: string; busy: boolean; onSave: () => void; nickname: string; setNickname: (s: string) => void }) {
+  // "’57 Bel Air 4-door sedan": the series (150, 210, Bel Air) comes from the serial number.
+  const kind = body === 'nomad' ? bodyName(body) : `${series ? `${series} ` : ''}${bodyName(body).toLowerCase()}`;
   return (
     <div className="pt-4 border-t-[3px] border-brand/20 space-y-3">
-      <p className="text-xl font-bold">Your car: {yy(year)} {bodyName(body)}</p>
+      <p className="text-xl font-bold">Your car: {yy(year)} {kind}</p>
       <p className="text-lg">Save it to your account to keep a parts list for this car, or go straight to the parts.</p>
       <div>
         <label htmlFor="car-nickname" className="label">Give it a nickname (optional)</label>

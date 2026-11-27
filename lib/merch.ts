@@ -129,6 +129,15 @@ export function merchImageFor(item: MerchItem, option: MerchOption | null): stri
   return item.images[0];
 }
 
+/** Printful's option label as a shopper would say it: "G. Dyed Kaffa Coffee / XL" → "Kaffa Coffee, XL". */
+export const prettyOption = (label: string) =>
+  label
+    .replace(/^G\.\s*Dyed\s+/i, '')
+    .split(/\s*\/\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(', ');
+
 export const merchKey = (handle: string, option?: string) => `merch:${handle}:${option ?? ''}`;
 
 /** Resolve a cart key like "merch:clover-tee:L" to today's item, option and price. */
@@ -143,7 +152,7 @@ export async function getMerchLine(key: string): Promise<MerchLine | null> {
     key,
     item,
     option,
-    name: option && item.options.length > 1 ? `${item.name} (${option.label})` : item.name,
+    name: option && item.options.length > 1 ? `${item.name} (${prettyOption(option.label)})` : item.name,
     price: option?.price ?? item.price,
   };
 }

@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { goldenStarCart, orderFromSession, sendToPrintful } from '@/lib/orders';
 import { orderEmail, sendOrderEmail } from '@/lib/order-email';
 import { saveOrder } from '@/lib/order-store';
+import { stillForSale } from '@/lib/reserved';
 
 // Stripe calls this right after a customer pays.
 // 1. Printed merch goes to Printful.
@@ -42,9 +43,16 @@ export async function POST(req: Request) {
 
   try {
     const order = await orderFromSession(stripe, session.id);
+    // Two customers can pay for the last few of a part at nearly the same time.
+    // Check again now, and warn in the email before anything is ordered.
+    const gsParts = order.lines.filter((l) => l.kind === 'part' && l.supplier === 'golden_star' && l.handle);
+    const left = await stillForSale(gsParts.map((l) => l.handle!), { live: order.live, exceptOrder: order.id });
+    const stockWarnings = gsParts
+      .filter((l) => left.has(l.handle!) && l.qty > left.get(l.handle!)!)
+      .map((l) => `${l.name}${l.partNumber ? ` (${l.partNumber})` : ''}: ordered ${l.qty}, but only ${left.get(l.handle!)} looked available. Check Golden Star has them before ordering, and refund the customer in Stripe if not.`);
     await saveOrder(order); // for the customer's account page; never blocks the email
     const [gs, printful] = await Promise.all([goldenStarCart(order), sendToPrintful(order)]);
-    await sendOrderEmail(orderEmail(order, gs, printful));
+    await sendOrderEmail(orderEmail(order, gs, printful, stockWarnings));
     console.log(`Order ${order.id}: emailed; Printful ${printful.status}`);
     return NextResponse.json({ ok: true });
   } catch (e) {

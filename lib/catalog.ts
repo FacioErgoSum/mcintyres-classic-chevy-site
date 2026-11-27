@@ -281,6 +281,79 @@ export type Filter = { year?: number; body?: string; area?: string; q?: string }
 
 const wordsOf = (q?: string) => (q || '').toLowerCase().split(/\s+/).map((w) => w.replace(/[^a-z0-9.\-/&]/g, '')).filter(Boolean);
 
+// ---------- Search: match the words people type to the supplier's spelling ----------
+
+// Joins words that people write both ways ("head light" / "headlight", "floorpan" / "floor pan"),
+// so a search and a title always meet in the same spelling.
+export function normalizeSearchText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\b(tail|head|back\s*up|parking|dome|dash|courtesy|marker)\s*(?:lights?|lamps?)\b/g, (_, a: string) => `${a.replace(/\s+/g, '')}light`)
+    .replace(/\btailight/g, 'taillight')
+    .replace(/\bfloorpan/g, 'floor pan')
+    .replace(/\btrunkpan/g, 'trunk pan')
+    .replace(/\bgrill\b/g, 'grille')
+    .replace(/\bmoulding/g, 'molding');
+}
+
+// A word in a search that the supplier calls something else. Any one of the list counts.
+const SYNONYMS: Record<string, string[]> = {
+  emblem: ['emblem', 'script', 'vee', 'badge', 'crest', 'rocket'],
+  badge: ['badge', 'emblem', 'script', 'crest'],
+  script: ['script', 'emblem'],
+  ornament: ['ornament', 'rocket', 'emblem'],
+  logo: ['emblem', 'script', 'crest'],
+  bezel: ['bezel', 'ring'],
+  weatherstrip: ['weatherstrip', 'weather strip', 'seal'],
+};
+
+// Words that describe the car, not the part. They help rank results but aren't required
+// ("56 bel air fender" finds a '56 fender even when its title doesn't say Bel Air).
+const SOFT = new Set(['chevy', 'chevrolet', 'chev', 'car', 'cars', 'for', 'the', 'a', 'an', 'my', 'of', 'and', 'bel', 'air', 'belair', '150', '210', 'tri', 'five', 'trifive', 'tri-five']);
+
+// "pans" → "pan", "assemblies" → "assembly"; titles are matched by substring, so "pan" still finds "pans".
+function singular(w: string): string {
+  if (w.length <= 3 || /\d/.test(w) || /ss$/.test(w)) return w;
+  if (/ies$/.test(w)) return w.slice(0, -3) + 'y';
+  if (/(sh|ch|x)es$/.test(w)) return w.slice(0, -2);
+  if (/s$/.test(w)) return w.slice(0, -1);
+  return w;
+}
+
+type Search = { words: string[]; soft: string[]; years: number[] };
+
+function parseSearch(q?: string): Search {
+  const all = wordsOf(normalizeSearchText(q || ''));
+  const years: number[] = [];
+  const words: string[] = [];
+  const soft: string[] = [];
+  for (const raw of all) {
+    const y = raw.match(/^(?:19)?(5[5-7])$/);
+    if (y) { years.push(1900 + Number(y[1])); continue; }
+    const w = singular(raw);
+    (SOFT.has(raw) ? soft : words).push(w);
+  }
+  // Only car words ("bel air"): then they are the search.
+  if (!words.length && soft.length) return { words: soft, soft: [], years };
+  return { words, soft, years };
+}
+
+const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+function matchesWord(hay: string, pn: string, w: string): boolean {
+  if (hay.includes(w)) return true;
+  // Part numbers with or without the dash or space: FP13-551L, FP13551L, FP13 551L
+  if (/\d/.test(w) && pn && pn.includes(compact(w))) return true;
+  return (SYNONYMS[w] || []).some((s) => hay.includes(s));
+}
+
+function matchesSearch(p: Part, s: Search): boolean {
+  if (s.years.length && !s.years.some((y) => p.fitment.years.includes(y as Fitment['years'][number]))) return false;
+  const hay = normalizeSearchText(`${p.name} ${p.title} ${p.partNumber ?? ''}`);
+  const pn = compact(p.partNumber ?? '');
+  return s.words.every((w) => matchesWord(hay, pn, w));
+}
+
 const esc = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const SMALL_BITS = /\b(braces?|brackets?|patch(es)?|supports?|clips?|extensions?|reinforcements?|gaskets?|seals?|plugs?|hardware|bolts?|screws?)\b/i;
 
@@ -290,11 +363,11 @@ const SMALL_BITS = /\b(braces?|brackets?|patch(es)?|supports?|clips?|extensions?
 // unless those were searched for.
 function searchScore(p: Part, words: string[]): number {
   // "2 Door" and "4 Door" describe the car, not the part
-  const text = `${p.name} ${p.title}`.toLowerCase().replace(/\b\d\s*-?\s*(door|dr)s?\b/g, ' ');
-  const pn = (p.partNumber ?? '').toLowerCase();
+  const text = normalizeSearchText(`${p.name} ${p.title}`).replace(/\b\d\s*-?\s*(door|dr)s?\b/g, ' ');
+  const pn = compact(p.partNumber ?? '');
   let score = 0;
-  if (pn && words.join(' ') === pn) score += 1000;
-  else if (pn && words.some((w) => pn.startsWith(w) && w.length > 3)) score += 300;
+  if (pn && compact(words.join('')) === pn) score += 1000;
+  else if (pn && words.some((w) => pn.startsWith(compact(w)) && w.length > 3)) score += 300;
   const phrase = words.join(' ');
   if (words.length > 1 && new RegExp(`\\b${esc(phrase)}(s|es)?\\b`).test(text)) score += 100;
   for (const w of words) {
@@ -302,7 +375,7 @@ function searchScore(p: Part, words: string[]): number {
     else if (new RegExp(`\\b${esc(w)}`).test(text)) score += 5;
   }
   // "Kit with Factory Style Hood" or "Hood Latch" are not the hood itself
-  const title = p.title.toLowerCase().replace(/\b\d\s*-?\s*(door|dr)s?\b/g, ' ').replace(/\s*\(.*?\)\s*/g, ' ').replace(/[,\s]+(lh|rh|pair|set)\s*$/i, '').trim();
+  const title = normalizeSearchText(p.title).replace(/\b\d\s*-?\s*(door|dr)s?\b/g, ' ').replace(/\s*\(.*?\)\s*/g, ' ').replace(/[,\s]+(lh|rh|pair|set)\s*$/i, '').trim();
   const at = title.search(new RegExp(`\\b${esc(words[0])}`));
   const joiner = title.search(/\b(with|w\/|incl|for|to|fits?|inside|behind|under)\b/);
   if (joiner >= 0 && at > joiner) score -= 25;
@@ -314,17 +387,16 @@ function searchScore(p: Part, words: string[]): number {
 
 /** Tri-Five parts matching the planner or a search, best match first. */
 export async function findParts({ year, body, area, q }: Filter): Promise<Part[]> {
-  const words = wordsOf(q);
+  const search = parseSearch(q);
+  const searching = search.words.length > 0 || search.years.length > 0;
   const found = (await allParts()).filter((p) => {
     if (!fits(p.fitment, year, body)) return false;
     if (area && !p.areas.includes(area as AreaId)) return false;
-    if (words.length) {
-      const hay = `${p.name} ${p.title} ${p.partNumber ?? ''}`.toLowerCase();
-      if (!words.every((w) => hay.includes(w))) return false;
-    }
+    if (searching && !matchesSearch(p, search)) return false;
     return true;
   });
-  if (!words.length) return found;
+  if (!search.words.length) return found;
+  const words = [...search.words, ...search.soft];
   const scores = new Map(found.map((p) => [p.handle, searchScore(p, words)]));
   return found.sort((a, b) => scores.get(b.handle)! - scores.get(a.handle)! || a.title.localeCompare(b.title));
 }

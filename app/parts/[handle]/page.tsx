@@ -8,13 +8,22 @@ import { EXTRA_PART_USD, FREIGHT_USD, GS_PACKING_FEE_USD, SMALL_PARCEL_USD } fro
 import AddToCart from '@/components/AddToCart';
 import Gallery from '@/components/Gallery';
 import SaveToList from '@/components/account/SaveToList';
+import BackLink from '@/components/BackLink';
 
 export const revalidate = 600;
 type P = Promise<{ handle: string }>;
 
 export async function generateMetadata({ params }: { params: P }): Promise<Metadata> {
   const part = await getPart((await params).handle);
-  return part ? { title: part.mcintyreMade ? part.name : part.title, description: (part.description || part.name).slice(0, 160) } : {};
+  if (!part) return {};
+  const title = part.mcintyreMade ? part.name : part.title;
+  const description = (part.description || part.name).slice(0, 160);
+  return {
+    title,
+    description,
+    alternates: { canonical: `/parts/${part.handle}` },
+    openGraph: { title, description, url: `/parts/${part.handle}`, ...(part.images[0] ? { images: [part.images[0].large] } : {}) },
+  };
 }
 
 export default async function PartPage({ params }: { params: P }) {
@@ -23,7 +32,13 @@ export default async function PartPage({ params }: { params: P }) {
 
   return (
     <article className="space-y-8">
-      <p><Link href={part.triFive ? '/parts' : `/other?line=${part.line}`}>{part.triFive ? 'Back to all parts' : `Back to ${lineName(part.line)}`}</Link></p>
+      <p>
+        <BackLink
+          href={part.triFive ? '/parts' : `/other?line=${part.line}`}
+          label={part.triFive ? 'Back to all parts' : `Back to ${lineName(part.line)}`}
+          listPrefix={part.triFive ? '/parts' : '/other'}
+        />
+      </p>
       <h1 className="text-2xl sm:text-3xl">{part.name}</h1>
 
       <Gallery photos={part.images} name={part.name} />

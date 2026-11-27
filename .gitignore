@@ -6,3 +6,4 @@ node_modules/
 
 *.tsbuildinfo
 public/planner/fit/
+public/merch/**/*-thumb.webp

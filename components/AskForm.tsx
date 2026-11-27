@@ -1,5 +1,10 @@
 'use client';
 import { useState } from 'react';
+import Script from 'next/script';
+
+// Cloudflare Turnstile (a free, mostly invisible "are you a person" check). Shown only
+// once NEXT_PUBLIC_TURNSTILE_SITE_KEY is set; the server checks it with TURNSTILE_SECRET_KEY.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type Props = { years: number[]; bodies: { id: string; name: string }[]; partName?: string; partHandle?: string };
 
@@ -29,6 +34,7 @@ export default function AskForm({ years, bodies, partName, partHandle }: Props) 
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
   const [count, setCount] = useState(0);
+  const [startedAt] = useState(() => Date.now());
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -52,6 +58,7 @@ export default function AskForm({ years, bodies, partName, partHandle }: Props) 
       setState('sent');
     } catch (err) {
       setError((err instanceof Error ? err.message : 'Your message didn’t send.') + ' Please try again.');
+      (window as unknown as { turnstile?: { reset: () => void } }).turnstile?.reset(); // a check can only be used once
       setState('error');
     }
   }
@@ -67,6 +74,12 @@ export default function AskForm({ years, bodies, partName, partHandle }: Props) 
 
   return (
     <form onSubmit={submit} className="space-y-6 max-w-xl">
+      {/* Spam traps: people never see or fill the first; bots that send the form instantly are caught by the second. */}
+      <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+        <label htmlFor="website">Leave this empty</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+      </div>
+      <input type="hidden" name="started" value={startedAt} />
       {partHandle && (
         <>
           <input type="hidden" name="part" value={partHandle} />
@@ -108,6 +121,12 @@ export default function AskForm({ years, bodies, partName, partHandle }: Props) 
           onChange={(e) => setCount(e.currentTarget.files?.length ?? 0)} />
         <p className="text-lg mt-2" aria-live="polite">{count ? `${count} photo${count === 1 ? '' : 's'} added.` : 'No photos added yet.'}</p>
       </div>
+      {TURNSTILE_SITE_KEY && (
+        <>
+          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
+          <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-size="flexible" />
+        </>
+      )}
       {error && <p role="alert" className="rounded-lg bg-matador/10 border-[3px] border-matador p-4 text-lg">{error}</p>}
       <button className="btn-main text-xl" type="submit" disabled={state === 'sending'}>
         {state === 'sending' ? 'Sending…' : 'Send my question'}

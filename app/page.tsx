@@ -29,7 +29,7 @@ export default async function Home() {
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {areas.map(({ a, n }) => (
             <li key={a.id}>
-              <ChoiceTile href={`/parts?area=${a.id}`} title={a.name} note={`${n.toLocaleString()} ${n === 1 ? 'part' : 'parts'}`} art={art(`area-${a.id}`)} shape="part" />
+              <ChoiceTile href={`/parts?area=${a.id}`} title={a.name} note={`${n.toLocaleString()} ${n === 1 ? 'part' : 'parts'}`} art={art(`area-${a.id}`) ?? parts.find((p) => p.areas.includes(a.id) && p.images[0])?.images[0].large} shape="part" />
             </li>
           ))}
         </ul>
@@ -81,7 +81,7 @@ export default async function Home() {
         <p className="max-w-[60ch]">
           McIntyre’s is a family shop in Kansas. Geoff McIntyre came home from the hospital in his dad’s ’57 Bel Air,
           bought his own yellow ’57 in 1984, and has bought and sold well over a hundred Tri-Fives since.
-          Sheet metal repair is the heart of our shop, and we only sell parts for these three years, so we know how they go together.
+          Sheet metal repair is the heart of our shop, and Tri-Fives are what we know best. We carry parts for other classic Chevys too.
         </p>
         <Link href="/about" className="btn-plain">Read Geoff’s story</Link>
       </section>

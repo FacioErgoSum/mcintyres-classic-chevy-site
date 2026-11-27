@@ -4,6 +4,8 @@ import { getPart } from '@/lib/catalog';
 import { shippingForOrder } from '@/lib/shipping';
 import { getMerchLine, merchImageFor } from '@/lib/merch';
 import { currentUser } from '@/lib/supabase/server';
+import { stillForSale } from '@/lib/reserved';
+import { RETURN_DAYS } from '@/lib/policy';
 
 // Builds a Stripe Checkout page. Prices always come from the catalog on the
 // server, never from the browser.
@@ -24,7 +26,14 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: 'Your cart could not be read.' }, { status: 400 });
   }
-  const items = (body.items || []).filter((i) => i && typeof i.handle === 'string' && Number.isInteger(i.qty) && i.qty > 0 && i.qty <= 50).slice(0, 40);
+  // The same part twice counts as one line, so two lines can't add up past the stock limit.
+  const merged = new Map<string, number>();
+  for (const i of body.items || []) {
+    if (!i || typeof i.handle !== 'string' || !Number.isInteger(i.qty) || i.qty <= 0 || i.qty > 50) continue;
+    merged.set(i.handle, (merged.get(i.handle) || 0) + i.qty);
+  }
+  const items = [...merged].map(([handle, qty]) => ({ handle, qty })).slice(0, 40);
+  if (items.some((i) => i.qty > 50)) return NextResponse.json({ error: 'That’s more than we can sell in one order. Please send us a message for a bulk order.' }, { status: 400 });
   if (!items.length) return NextResponse.json({ error: 'Your cart is empty.' }, { status: 400 });
 
   // Every line carries what the order email needs (in Stripe's metadata), so
@@ -93,6 +102,20 @@ export async function POST(req: Request) {
     });
   }
 
+  // Count what's been sold here since Golden Star's stock was last read.
+  const left = await stillForSale(
+    lines.filter((l) => l.group === 'part' && l.goldenStar).map((l) => l.meta.handle),
+    { live: key.startsWith('sk_live_') },
+  );
+  for (const l of lines) {
+    const n = l.group === 'part' ? left.get(l.meta.handle) : undefined;
+    if (n === undefined || l.qty <= n) continue;
+    return NextResponse.json(
+      { error: n === 0 ? `${l.name} just sold out. Remove it and try again.` : `We can only promise ${n} of ${l.name} right now. Lower the number and try again.` },
+      { status: 409 },
+    );
+  }
+
   const ship = shippingForOrder({
     parts: lines.filter((l) => l.group === 'part').map((l) => ({ freight: l.freight, qty: l.qty, goldenStar: !!l.goldenStar })),
     mailerMerch: lines.filter((l) => l.group === 'mailer').length,
@@ -125,6 +148,9 @@ export async function POST(req: Request) {
         { shipping_rate_data: { display_name: ship.label.slice(0, 100), type: 'fixed_amount', fixed_amount: { amount: Math.round(ship.amount * 100), currency: 'usd' } } },
       ],
       phone_number_collection: { enabled: true }, // freight carriers call before delivery
+      custom_text: {
+        submit: { message: `Freight: please check every box before you sign for it. Returns within ${RETURN_DAYS} days of ordering. Full policy: ${site}/shipping-returns` },
+      },
       ...(process.env.STRIPE_TAX === 'on' ? { automatic_tax: { enabled: true } } : {}),
       metadata: { shipping: ship.lines.map((s) => `${s.label} $${s.amount}`).join(', ') },
       success_url: `${site}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

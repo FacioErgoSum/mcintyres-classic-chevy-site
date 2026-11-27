@@ -3,10 +3,19 @@ import Link from 'next/link';
 import './globals.css';
 import CartLink from '@/components/CartLink';
 import AccountLink from '@/components/AccountLink';
+import { siteUrl } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: { default: 'McIntyre’s Classic Chevy — 1955, 1956 and 1957 Chevrolet parts', template: '%s — McIntyre’s Classic Chevy' },
   description: 'Sheet metal and parts for 1955, 1956 and 1957 Chevrolets, picked by a family that has been restoring Tri-Fives for over 50 years.',
+  metadataBase: new URL(siteUrl()),
+  // The picture and words Facebook, texts and other sites show when someone shares a link.
+  openGraph: {
+    type: 'website',
+    siteName: 'McIntyre’s Classic Chevy',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'A row of ’55, ’56 and ’57 Chevrolets outside the McIntyre’s shop' }],
+  },
+  twitter: { card: 'summary_large_image' },
 };
 
 // Let people zoom as far as they like.
@@ -99,7 +108,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </a>
               </li>
             </ul>
-            <p className="text-sm"><Link href="/privacy" className="text-white">Privacy policy</Link></p>
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Policies">
+              <li><Link href="/shipping-returns" className="text-white">Shipping and returns</Link></li>
+              <li><Link href="/terms" className="text-white">Terms of sale</Link></li>
+              <li><Link href="/privacy" className="text-white">Privacy policy</Link></li>
+            </ul>
             <p className="text-sm text-white/70">Chevrolet, Bel Air and Nomad are trademarks of General Motors. McIntyre’s is not affiliated with GM.</p>
           </div>
         </footer>

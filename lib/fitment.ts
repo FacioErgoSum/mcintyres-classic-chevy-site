@@ -48,7 +48,8 @@ function bodiesIn(text: string): BodyId[] {
   if (/conv(ertible)?\b/.test(t)) out.add('convertible');
 
   // hardtops
-  if (/hardtop|ht\b/.test(t)) {
+  // "ht" must be its own word: "light" and "right" end in ht too.
+  if (/hardtop|\bh\/?t\b/.test(t)) {
     const fourHt = /(4|four)\s*(dr|door)\s*hardtop/.test(t);
     const twoHt = /(2|two)\s*(dr|door)\s*hardtop/.test(t) || both.test(t);
     if (fourHt) out.add('4-door-hardtop');

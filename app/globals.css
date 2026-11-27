@@ -2,13 +2,10 @@
 @import '@fontsource/atkinson-hyperlegible/700.css';
 @import '@fontsource/yellowtail/400.css';
 
-/* Raceway by Zavier Cabarga (licensed font). Put the webfont files in public/fonts/
-   as raceway.woff2 and/or raceway.woff. Until they're there, titles fall back to Yellowtail. */
-@font-face {
-  font-family: 'Raceway';
-  src: url('/fonts/raceway.woff2') format('woff2'), url('/fonts/raceway.woff') format('woff');
-  font-display: swap;
-}
+/* Raceway by Zavier Cabarga (licensed font) isn't used yet. To add it: put raceway.woff2
+   in public/fonts/, then add back
+   @font-face { font-family: 'Raceway'; src: url('/fonts/raceway.woff2') format('woff2'); font-display: swap; }
+   (Loading it while the file was missing made every page ask for it and get a 404.) */
 
 @tailwind base;
 @tailwind components;
@@ -39,9 +36,11 @@
   .btn {
     @apply inline-flex items-center justify-center gap-3 rounded-xl px-5 py-3 text-lg font-bold no-underline min-h-[52px] w-full sm:w-auto;
   }
-  .btn-buy { @apply btn bg-matador text-white hover:bg-matador-dark hover:text-white; }
+  .btn-buy { @apply btn bg-brand text-white hover:bg-brand-dark hover:text-white; }
   .btn-main { @apply btn bg-brand text-white hover:bg-brand-dark hover:text-white; }
   .btn-plain { @apply btn bg-white text-onyx border-[3px] border-onyx hover:bg-brand-light hover:text-onyx; }
+  /* A button that can't be pressed yet looks it. */
+  .btn:disabled { @apply cursor-not-allowed bg-onyx/15 text-onyx/55 border-onyx/20 hover:bg-onyx/15 hover:text-onyx/55; }
 
   /* Big choice tiles for the Project Planner */
   .choice {

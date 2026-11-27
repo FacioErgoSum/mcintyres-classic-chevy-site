@@ -5,6 +5,9 @@ import { money } from '@/lib/catalog';
 import Img from '@/components/Img';
 
 export const metadata: Metadata = { title: 'Merch' };
+
+// Our own photos have a small copy made at build time (scripts/merch-thumbs.mjs).
+const thumb = (u: string) => (u.startsWith('/merch/') ? u.replace(/\.(webp|png|jpe?g)$/i, '-thumb.webp') : u);
 export const revalidate = 600;
 
 export default async function MerchPage() {
@@ -22,7 +25,7 @@ export default async function MerchPage() {
               >
                 <span className="aspect-square w-full rounded-lg bg-ivory overflow-hidden flex items-center justify-center">
                   {m.images[0] ? (
-                    <Img srcs={[m.images[0]]} alt="" className="w-full h-full object-contain" />
+                    <Img srcs={[thumb(m.images[0]), m.images[0]]} alt="" className="w-full h-full object-contain" />
                   ) : (
                     <span className="text-base text-onyx/60">Photo coming</span>
                   )}
