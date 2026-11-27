@@ -11,7 +11,7 @@ const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', curr
 // The parts on a list, with "Add all to cart". onQty is given only to the owner.
 export default function ListItems({ items, onQty, car = null }: { items: ListPart[]; onQty?: (handle: string, qty: number) => void; car?: Car | null }) {
   const [added, setAdded] = useState<string | null>(null);
-  const buyable = items.filter((i) => i.part && i.part.stock.status !== 'out');
+  const buyable = items.filter((i) => i.part && i.part.stock.status !== 'out' && !i.part.quoteOnly);
   const total = buyable.reduce((s, i) => s + i.part!.price * Math.min(i.qty, i.part!.stock.maxQty), 0);
 
   function addAll() {
@@ -20,7 +20,7 @@ export default function ListItems({ items, onQty, car = null }: { items: ListPar
       addToCart({ handle: i.handle, name: p.name, price: p.price, images: p.images, freight: p.freight, maxQty: p.stock.status === 'in' ? p.stock.maxQty : undefined }, i.qty);
     }
     const skipped = items.length - buyable.length;
-    setAdded(`Added ${buyable.length} ${buyable.length === 1 ? 'part' : 'parts'} to the cart.${skipped ? ` ${skipped} out of stock or no longer sold, so left out.` : ''}`);
+    setAdded(`Added ${buyable.length} ${buyable.length === 1 ? 'part' : 'parts'} to the cart.${skipped ? ` ${skipped} out of stock, no longer sold or quoted by hand, so left out.` : ''}`);
   }
 
   return (

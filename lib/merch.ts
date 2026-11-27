@@ -79,6 +79,13 @@ const SAMPLE: MerchItem[] = [
   },
 ];
 
+// Merch page order: shirts first, then hats, then everything else
+// (within each group, the `sort` column and then the name, as before).
+const kindRank = (name: string) =>
+  /\b(t-?shirts?|tees?|shirts?|hoodies?|sweatshirts?|crewnecks?)\b/i.test(name) ? 0
+  : /\b(hats?|caps?|beanies?|snapbacks?|truckers?)\b/i.test(name) ? 1
+  : 2;
+
 let cache: { at: number; items: MerchItem[] } | null = null;
 
 /** Published merch, in display order. Empty if the merch table doesn't exist yet. */
@@ -94,7 +101,7 @@ export async function allMerch(): Promise<MerchItem[]> {
       .order('name');
     if (error) {
       if (!/merch/.test(error.message)) console.error('Merch:', error.message);
-    } else items = (data as Row[]).map(toItem);
+    } else items = (data as Row[]).map(toItem).sort((a, b) => kindRank(a.name) - kindRank(b.name));
   } else if (process.env.LOCAL_PRODUCTS_JSON) {
     items = SAMPLE;
   }
@@ -104,6 +111,18 @@ export async function allMerch(): Promise<MerchItem[]> {
 
 export async function getMerch(handle: string) {
   return (await allMerch()).find((m) => m.handle === handle) || null;
+}
+
+/** The photo for an option's color ("G. Dyed Stone / L" → .../stone-front.webp), else the main photo. */
+export function merchImageFor(item: MerchItem, option: MerchOption | null): string | undefined {
+  const label = option?.label || '';
+  const i = label.lastIndexOf(' / ');
+  if (i > 0) {
+    const slug = label.slice(0, i).replace(/^G\.\s*Dyed\s+/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const hit = item.images.filter((u) => (u.split('/').pop() || '').startsWith(slug + '-'));
+    return hit.find((u) => /-front\./.test(u)) || hit[0] || item.images[0];
+  }
+  return item.images[0];
 }
 
 export const merchKey = (handle: string, option?: string) => `merch:${handle}:${option ?? ''}`;

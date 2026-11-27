@@ -12,11 +12,11 @@ type Props = React.ComponentProps<typeof MerchBuy> & {
 // color's (files named like /merch/<item>/<color>-front.webp).
 export default function MerchShop({ children, ...buy }: Props) {
   const colors = colorsOf(buy.options);
-  const [color, setColor] = useState<string | null>(colors.length === 1 ? colors[0] : null);
-
-  // Before a color is picked, show the color of the main photo.
+  // The default color is the one in the main photo (e.g. kaffa-coffee-front-back.webp), already picked.
   const firstFile = buy.images[0]?.split('/').pop() || '';
-  const shown = color ?? colors.find((c) => firstFile.startsWith(colorSlug(c) + '-')) ?? null;
+  const defaultColor = colors.length === 1 ? colors[0] : colors.find((c) => firstFile.startsWith(colorSlug(c) + '-')) ?? null;
+  const [color, setColor] = useState<string | null>(defaultColor);
+  const shown = color;
   const photos = photosForColor(buy.images, shown).map((u) => ({ thumb: u, large: u, original: u }));
 
   return (

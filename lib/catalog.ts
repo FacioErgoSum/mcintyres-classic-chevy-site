@@ -25,8 +25,15 @@ export type Part = {
   triFive: boolean;
   mcintyreMade: boolean;
   freight: boolean;
+  /** Complete bodies: freight is quoted per order, so they can't be bought online. */
+  quoteOnly: boolean;
   stock: Stock; // Golden Star's stock and the most a customer can order
 };
+
+// Complete bodies ship by special truck freight that Golden Star quotes per order
+// ("Freight - Need special quote"), so the flat freight rate can't cover them.
+export const isQuoteOnly = (title: string, cats: string[]) =>
+  cats.some((c) => c.startsWith('/body-shells')) || /body shell|body skel/i.test(title);
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -167,6 +174,7 @@ function toPart(r: Row): Part | null {
     triFive,
     mcintyreMade: r.supplier_id === 'mcintyre',
     freight: r.supplier_id === 'mcintyre' ? false : needsFreight(r.title, Number(r.retail_price), r.description),
+    quoteOnly: isQuoteOnly(r.title, cats),
     stock: stockFor(r.stock_status, r.stock_qty, r.supplier_id === 'mcintyre'),
   };
 }

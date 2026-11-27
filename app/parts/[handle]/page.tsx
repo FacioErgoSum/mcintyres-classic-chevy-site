@@ -33,11 +33,18 @@ export default async function PartPage({ params }: { params: P }) {
         {part.stock.status === 'in' && <p className="inline-block rounded-md bg-brand-light px-3 py-1 text-lg font-bold">In stock</p>}
         {part.stock.status === 'out' && <p className="inline-block rounded-md bg-onyx px-3 py-1 text-lg font-bold text-white">Out of stock</p>}
         <dl className="text-lg space-y-1">
-          <div>
-            <dt className="inline">{part.freight ? 'Freight shipping' : 'Ground shipping'}: </dt>
-            <dd className="inline">{part.freight ? `${money(FREIGHT_USD)} per order, no matter how many parts` : `${money(SMALL_PARCEL_USD)} per order, plus ${money(EXTRA_PART_USD)} for each extra part`}</dd>
-          </div>
-          {!part.mcintyreMade && (
+          {part.quoteOnly ? (
+            <div>
+              <dt className="inline">Shipping: </dt>
+              <dd className="inline">truck freight, quoted for your address</dd>
+            </div>
+          ) : (
+            <div>
+              <dt className="inline">{part.freight ? 'Freight shipping' : 'Ground shipping'}: </dt>
+              <dd className="inline">{part.freight ? `${money(FREIGHT_USD)} per order, no matter how many parts` : `${money(SMALL_PARCEL_USD)} per order, plus ${money(EXTRA_PART_USD)} for each extra part`}</dd>
+            </div>
+          )}
+          {!part.mcintyreMade && !part.quoteOnly && (
             <div>
               <dt className="inline">Warehouse packing fee: </dt>
               <dd className="inline">{money(GS_PACKING_FEE_USD)} per order</dd>
@@ -46,7 +53,13 @@ export default async function PartPage({ params }: { params: P }) {
         </dl>
       </div>
 
-      {part.stock.status === 'out' ? (
+      {part.quoteOnly ? (
+        <section className="space-y-3 rounded-xl border-[3px] border-brand p-5">
+          <p className="text-xl font-bold">Complete bodies ship by truck, priced for your address.</p>
+          <p className="text-lg">Tell us where it’s going and we’ll send you a freight quote and a total before you pay anything.</p>
+          <Link href={`/ask?part=${encodeURIComponent(part.handle)}`} className="btn-buy text-xl sm:w-auto sm:min-w-[18rem]">Get a freight quote</Link>
+        </section>
+      ) : part.stock.status === 'out' ? (
         <section className="space-y-3 rounded-xl border-[3px] border-onyx/30 p-5">
           <p className="text-xl font-bold">This part is out of stock right now.</p>
           <p className="text-lg">We only take orders for parts we can ship, so you won’t be charged and left waiting. <Link href={`/ask?part=${encodeURIComponent(part.handle)}`}>Ask us when it’ll be back</Link>.</p>

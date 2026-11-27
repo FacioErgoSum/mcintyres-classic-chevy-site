@@ -43,6 +43,7 @@ export async function recommend(handles: string[], max = 4): Promise<Suggestion[
     if (taken.has(part.handle)) return;
     if (part.freight && !cartHasFreight) return;
     if (part.stock.status === 'out') return;
+    if (part.quoteOnly) return; // complete bodies are quoted by hand
     const prev = scored.get(part.handle);
     if (!prev || prev.score < score) scored.set(part.handle, { part, score, reason });
   };

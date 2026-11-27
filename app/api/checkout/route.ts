@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getPart } from '@/lib/catalog';
 import { shippingForOrder } from '@/lib/shipping';
-import { getMerchLine } from '@/lib/merch';
+import { getMerchLine, merchImageFor } from '@/lib/merch';
 import { currentUser } from '@/lib/supabase/server';
 
 // Builds a Stripe Checkout page. Prices always come from the catalog on the
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         qty: i.qty,
         name: m.name,
         price: m.price,
-        image: abs(m.item.images[0]),
+        image: abs(merchImageFor(m.item, m.option)),
         meta: {
           kind: m.item.fulfillment,
           key: m.key,
@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     }
     const part = await getPart(i.handle);
     if (!part) return NextResponse.json({ error: 'A part in your cart is no longer for sale. Remove it and try again.' }, { status: 400 });
+    if (part.quoteOnly) return NextResponse.json({ error: `${part.name} ships by special freight, so we quote it by hand. Remove it from your cart and send us a message for a quote.` }, { status: 409 });
     if (part.stock.maxQty === 0) return NextResponse.json({ error: `${part.name} is out of stock right now. Remove it and try again.` }, { status: 409 });
     if (i.qty > part.stock.maxQty) return NextResponse.json({ error: `We can only promise ${part.stock.maxQty} of ${part.name} right now. Lower the number and try again.` }, { status: 409 });
     lines.push({
