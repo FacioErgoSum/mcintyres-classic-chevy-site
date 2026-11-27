@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   placeholder="Search ’55–’57 Chevy parts"
                   autoComplete="off"
                   enterKeyHint="search"
-                  className="w-full h-[46px] sm:h-[50px] rounded-xl border-[3px] border-onyx bg-white pl-10 pr-3 text-base sm:text-lg text-onyx placeholder:text-onyx/55"
+                  className="w-full h-[46px] sm:h-[50px] rounded-xl border border-onyx bg-white pl-10 pr-3 text-base sm:text-lg text-onyx placeholder:text-onyx/55"
                 />
                 <button type="submit" className="sr-only">Search</button>
               </form>

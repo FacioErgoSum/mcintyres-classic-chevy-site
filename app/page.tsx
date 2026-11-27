@@ -6,7 +6,6 @@ import { AREAS } from '@/lib/areas';
 import ART from '@/lib/planner-art.json';
 import { currentSlides } from '@/lib/slides';
 import { allParts, money } from '@/lib/catalog';
-import { EXTRA_PART_USD, FREIGHT_USD, GS_PACKING_FEE_USD, SMALL_PARCEL_USD } from '@/lib/shipping';
 
 export const revalidate = 600;
 
@@ -85,15 +84,6 @@ export default async function Home() {
           Sheet metal repair is the heart of our shop, and we only sell parts for these three years, so we know how they go together.
         </p>
         <Link href="/about" className="btn-plain">Read Geoff’s story</Link>
-      </section>
-
-      <section className="space-y-4">
-        <h2>How shipping works</h2>
-        <ul className="list-disc pl-7 space-y-2 max-w-[60ch]">
-          <li>Small parts ship in a box for {money(SMALL_PARCEL_USD)}, plus {money(EXTRA_PART_USD)} for each extra part.</li>
-          <li>Big sheet metal, like floor pans, quarter panels and hoods, ships by truck freight for {money(FREIGHT_USD)} per order, no matter how many parts.</li>
-          <li>Our warehouse charges a {money(GS_PACKING_FEE_USD)} packing fee on every order.</li>
-        </ul>
       </section>
     </div>
   );
