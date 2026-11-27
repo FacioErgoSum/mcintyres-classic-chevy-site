@@ -79,12 +79,16 @@ const SAMPLE: MerchItem[] = [
   },
 ];
 
-// Merch page order: shirts first, then hats, then everything else
-// (within each group, the `sort` column and then the name, as before).
+// Merch page order: Tri-Five shirts first ('55, '56, '57), then other shirts, then hats,
+// then everything else (within each group, the `sort` column and then the name, as before).
+const SHIRT = /\b(t-?shirts?|tees?|shirts?|hoodies?|sweatshirts?|crewnecks?)\b/i;
+const TRI_FIVE = /resurrection|tri-?five|bel ?air|nomad|\b(19)?5[5-7]\b/i;
+const triFiveYear = (name: string) => Number(name.match(/\b(?:19)?(5[5-7])\b/)?.[1] ?? 57); // no year = the original '57
 const kindRank = (name: string) =>
-  /\b(t-?shirts?|tees?|shirts?|hoodies?|sweatshirts?|crewnecks?)\b/i.test(name) ? 0
-  : /\b(hats?|caps?|beanies?|snapbacks?|truckers?)\b/i.test(name) ? 1
-  : 2;
+  SHIRT.test(name) || /resurrection/i.test(name)
+    ? TRI_FIVE.test(name) ? (triFiveYear(name) - 55) / 10 : 1 // 0, 0.1, 0.2 for '55, '56, '57
+    : /\b(hats?|caps?|beanies?|snapbacks?|truckers?)\b/i.test(name) ? 2
+    : 3;
 
 let cache: { at: number; items: MerchItem[] } | null = null;
 
